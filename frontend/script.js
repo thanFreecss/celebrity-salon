@@ -519,4 +519,45 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     };
+
+    // User dropdown functionality
+    const userAvatar = document.getElementById('user-avatar');
+    const dropdownMenu = document.getElementById('dropdown-menu');
+
+    if (userAvatar && dropdownMenu) {
+        // Toggle dropdown when clicking the avatar
+        userAvatar.addEventListener('click', function(e) {
+            e.stopPropagation();
+            dropdownMenu.classList.toggle('show');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!userAvatar.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                dropdownMenu.classList.remove('show');
+            }
+        });
+
+        // Close dropdown when clicking on dropdown items
+        dropdownMenu.addEventListener('click', function(e) {
+            if (e.target.classList.contains('dropdown-item')) {
+                dropdownMenu.classList.remove('show');
+            }
+        });
+    }
+
+    // Profile settings function
+    window.openProfileSettings = function() {
+        // For now, just show an alert. You can implement a profile settings modal later
+        alert('Profile Settings - Coming Soon!');
+    };
+
+    // History function (replaces the old history button)
+    window.openHistoryModal = function() {
+        if (window.userProfile) {
+            window.userProfile.openHistoryModal();
+        } else {
+            alert('Please log in to view your booking history.');
+        }
+    };
 });
