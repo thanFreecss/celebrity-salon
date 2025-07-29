@@ -342,6 +342,13 @@ function populateReservationTable(data = reservations) {
                             </svg>
                         </button>` : ''
                     }
+                    ${reservation.status === 'confirmed' ? 
+                        `<button class="action-btn complete-btn" onclick="completeReservation('${reservation._id}')" title="Complete">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                        </button>` : ''
+                    }
                     ${reservation.status !== 'cancelled' ? 
                         `<button class="action-btn cancel-btn" onclick="cancelReservation('${reservation._id}')" title="Cancel">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -851,6 +858,51 @@ async function cancelReservation(id) {
         } catch (error) {
             console.error('Error cancelling reservation:', error);
             showNotification('Error cancelling reservation: ' + error.message, 'error');
+            return false;
+        }
+    }
+}
+
+async function completeReservation(id) {
+    const reservation = reservations.find(r => r._id === id);
+    if (!reservation) {
+        showNotification('Reservation not found', 'error');
+        return;
+    }
+
+    // Show confirmation dialog
+    const confirmed = await showConfirmDialog(
+        `Complete Reservation`,
+        `Are you sure you want to mark reservation for "${reservation.fullName}" as completed?`,
+        'This will mark the reservation as completed and the service has been provided.',
+        'Complete',
+        '#2196f3'
+    );
+
+    if (confirmed) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/bookings/${id}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${getAuthToken()}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: 'completed' })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification(`Reservation for "${reservation.fullName}" marked as completed successfully`, 'success');
+                await fetchReservations(); // Refresh the table
+                return true;
+            } else {
+                showNotification(data.message || 'Failed to complete reservation', 'error');
+                return false;
+            }
+        } catch (error) {
+            console.error('Error completing reservation:', error);
+            showNotification('Error completing reservation: ' + error.message, 'error');
             return false;
         }
     }

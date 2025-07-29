@@ -249,11 +249,12 @@ class UserProfile {
                 <td>${booking.service || 'N/A'}</td>
                 <td>${this.formatDate(booking.appointmentDate)}</td>
                 <td>${booking.selectedTime || 'N/A'}</td>
+                <td>${booking.selectedEmployee || 'Not assigned'}</td>
                 <td><span class="status-badge status-${booking.status || 'pending'}">${booking.status || 'Pending'}</span></td>
                 <td>₱${booking.totalAmount || 'N/A'}</td>
                 <td>
                     <button class="action-btn edit-btn" onclick="userProfile.viewBooking('${booking._id}')" title="View Details">View</button>
-                    ${booking.status === 'pending' ? `<button class="action-btn delete-btn" onclick="userProfile.cancelBooking('${booking._id}')" title="Cancel Booking">Cancel</button>` : ''}
+                    ${['pending', 'confirmed'].includes(booking.status) ? `<button class="action-btn delete-btn" onclick="userProfile.cancelBooking('${booking._id}')" title="Cancel Booking">Cancel</button>` : ''}
                 </td>
             `;
             tbody.appendChild(row);
@@ -335,6 +336,7 @@ class UserProfile {
                     <div class="booking-details-content">
                         <p><strong>Booking ID:</strong> ${booking._id ? booking._id.slice(-8).toUpperCase() : 'N/A'}</p>
                         <p><strong>Service:</strong> ${booking.service || 'N/A'}</p>
+                        <p><strong>Stylist:</strong> ${booking.selectedEmployee || 'Not assigned'}</p>
                         <p><strong>Date:</strong> ${this.formatDate(booking.appointmentDate)}</p>
                         <p><strong>Time:</strong> ${booking.selectedTime || 'N/A'}</p>
                         <p><strong>Status:</strong> <span class="status-badge status-${booking.status || 'pending'}">${booking.status || 'Pending'}</span></p>
