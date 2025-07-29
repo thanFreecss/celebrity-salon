@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Celebrity Styles Hair Salon</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/x-icon" href="images/celebpic.ico">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="images/celebpic.ico" alt="Celebrity Styles Logo">
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#">HOME</a></li>
+                <li><a href="#">PROMOS</a></li>
+                <li><a href="#">SERVICES</a></li>
+                <li><a href="#">CONTACT</a></li>
+                <li><a href="#">SEASONAL HAIRCARE GUIDE</a></li>
+            </ul>
+        </nav>
+        <div class="user-actions" id="user-actions">
+            <a href="login.html" class="login-btn" id="login-btn">Log In</a>
+            <a href="signup.html" class="signup-btn" id="signup-btn">Sign Up</a>
+        </div>
+        <div class="user-profile" id="user-profile" style="display: none;">
+            <button class="history-btn" id="history-btn" title="Booking History">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+            </button>
+            <button class="signout-btn" id="signout-btn" title="Sign Out" onclick="signOut()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+    <div class="announcement">
+        With our skilled and experienced hairstylists you are sure to come out a star!
+    </div>
+    <main>
+        <div class="hero">
+            <h1>Start your dreams with Celebrity Styles Hair Salon</h1>
+            <button class="cta" onclick="openBookingModal()">BOOK AN APPOINTMENT!</button>
+        </div>
+    </main>
+    <section class="promo-section" id="promo-section" style="display:none;">
+        <div class="promo-info">* Promos are valid for walk-ins & online bookings. Prices subject to change.</div>
+        <div class="promo-slider">
+            <button class="promo-arrow promo-prev" aria-label="Previous">&#8592;</button>
+            <div class="promo-slides">
+                <div class="promo-card card1 active">
+                    <div class="promo-title">Promo - Set A Hair Color</div>
+                    <ul class="promo-list">
+                        <li>Organic Hair Color with Cellophane ₱2699</li>
+                        <li>Organic Hair Color with Premium Botox ₱2699</li>
+                        <li>Organic Hair Color Brazillian ₱2299</li>
+                        <li>Organic Color with Hair Mask Treatment ₱1499</li>
+                        <li>Organic Color with K Touch ₱3499</li>
+                    </ul>
+                </div>
+                <div class="promo-card card2">
+                    <div class="promo-title">Promo - Set B Organic Rebond</div>
+                    <ul class="promo-list">
+                        <li>Organic Rebond with Cellophane ₱2399</li>
+                        <li>Organic Rebond with Premium Botox ₱3499</li>
+                        <li>Organic Rebond with Brazillian ₱3399</li>
+                        <li>Organic Rebond with Hair Mask ₱2699</li>
+                        <li>Organic Rebond with Hair Color + Cellophane ₱3499</li>
+                        <li>Organic Rebond with Organic Color + Premium Botox ₱3999</li>
+                    </ul>
+                </div>
+                <div class="promo-card card3">
+                    <div class="promo-title">Promo - Set C Free Haircut</div>
+                    <ul class="promo-list">
+                        <li>3D Highlights with Cellophane ₱2999</li>
+                        <li>3D Highlights with Brazillian ₱3499</li>
+                        <li>3D Highlights with Botox ₱4500</li>
+                        <li>Highlights No Base ₱1299</li>
+                        <li>Balayage ₱3299</li>
+                    </ul>
+                </div>
+                <div class="promo-card card4">
+                    <div class="promo-title">Promo - Set D Hair Treatment</div>
+                    <ul class="promo-list">
+                        <li>Premium Brazillian Botox ₱1399</li>
+                        <li>Brazillian with Collagen ₱1399</li>
+                        <li>K Touch Zero Formaldehyde ₱2499</li>
+                        <li>Hair Mask Repair Treatment ₱999</li>
+                        <li>Cellophane Treatment ₱899</li>
+                    </ul>
+                </div>
+            </div>
+            <button class="promo-arrow promo-next" aria-label="Next">&#8594;</button>
+        </div>
+        <div class="promo-dots">
+            <span class="promo-dot active" data-index="0"></span>
+            <span class="promo-dot" data-index="1"></span>
+            <span class="promo-dot" data-index="2"></span>
+            <span class="promo-dot" data-index="3"></span>
+        </div>
+    </section>
+    <section class="services-section" id="services-section" style="display:none;">
+        <nav class="services-categories">
+            <button class="category-btn active" data-category="all">ALL</button>
+            <button class="category-btn" data-category="manipedi">MANICURE & PEDICURE</button>
+            <button class="category-btn" data-category="hair">HAIR AND MAKE UP</button>
+            <button class="category-btn" data-category="massage">MASSAGE</button>
+            <button class="category-btn" data-category="lashes">LASHES</button>
+        </nav>
+        <div class="services-grid">
+            <div class="service-card" data-category="manipedi" data-service="manicure" onclick="selectServiceAndBook('manicure')">
+                <img src="images/Manicureexp.webp" alt="Manicure" height="200">
+                <div class="service-info">
+                    <h6>Manicure</h6>
+                    <p>Price: 150</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="manipedi" data-service="pedicure" onclick="selectServiceAndBook('pedicure')">
+                <img src="images/pedicure.webp" alt="Pedicure" height="200">
+                <div class="service-info">
+                    <h6>Pedicure</h6>
+                    <p>Price: 199</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="manipedi" data-service="footspa" onclick="selectServiceAndBook('footspa')">
+                <img src="images/footspa.webp" alt="Footspa" height="200">
+                <div class="service-info">
+                    <h6>Footspa</h6>
+                    <p>Price: 499</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="manipedi" data-service="manicure-gel" onclick="selectServiceAndBook('manicure-gel')">
+                <img src="images/manicuregelpolish.webp" alt="Manicure Gel Polish" height="200">
+                <div class="service-info">
+                    <h6>Manicure Gel Polish</h6>
+                    <p>Price: 499</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="manipedi" data-service="manipedi-gel" onclick="selectServiceAndBook('manipedi-gel')">
+                <img src="images/manipedi.webp" alt="Mani/Pedi Gel Polish" height="200">
+                <div class="service-info">
+                    <h6>Mani/Pedi Gel Polish</h6>
+                    <p>Price: 849</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="manipedi" data-service="pedi-gel-footspa" onclick="selectServiceAndBook('pedi-gel-footspa')">
+                <img src="images/pedifoot.webp" alt="Pedi Gel Polish w/ Footspa" height="200">
+                <div class="service-info">
+                    <h6>Pedi Gel Polish w/ Footspa</h6>
+                    <p>Price: 849</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="manipedi" data-service="pedi-gel" onclick="selectServiceAndBook('pedi-gel')">
+                <img src="images/pedigel.webp" alt="Pedi w/ Gel Polish" height="200">
+                <div class="service-info">
+                    <h6>Pedi w/ Gel Polish</h6>
+                    <p>Price: 499</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="manipedi" data-service="soft-gel-extension" onclick="selectServiceAndBook('soft-gel-extension')">
+                <img src="images/softextension.webp" alt="Soft Gel Extension w/ Gel Polish" height="200">
+                <div class="service-info">
+                    <h6>Soft Gel Extension w/ Gel Polish</h6>
+                    <p>Price: 999</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="massage" data-service="foot-massage" onclick="selectServiceAndBook('foot-massage')">
+                <img src="images/footmassage.webp" alt="Foot massage 30 minutes" height="200">
+                <div class="service-info">
+                    <h6>Foot massage 30 minutes</h6>
+                    <p>Price: 150</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="massage" data-service="hand-massage" onclick="selectServiceAndBook('hand-massage')">
+                <img src="images/handmassage.webp" alt="Hand massage 30 minutes" height="200">
+                <div class="service-info">
+                    <h6>Hand massage 30 minutes</h6>
+                    <p>Price: 150</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="hair" data-service="traditional-hamu" onclick="selectServiceAndBook('traditional-hamu')">
+                <img src="images/hamu.webp" alt="Traditional Hair and Make up" height="200">
+                <div class="service-info">
+                    <h6>Traditional Hair and Make up</h6>
+                    <p>Price: 1000</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="hair" data-service="glam-hamu" onclick="selectServiceAndBook('glam-hamu')">
+                <img src="images/glamhamu.webp" alt="Glam Hair & Make up" height="200">
+                <div class="service-info">
+                    <h6>Glam Hair & Make up</h6>
+                    <p>Price: 1500</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="hair" data-service="airbrush-hamu" onclick="selectServiceAndBook('airbrush-hamu')">
+                <img src="images/airbrush.webp" alt="Air Brush, Hair & Make up" height="200">
+                <div class="service-info">
+                    <h6>Air Brush, Hair & Make up</h6>
+                    <p>Price: 2000</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="lashes" data-service="classic-lashes" onclick="selectServiceAndBook('classic-lashes')">
+                <img src="images/classic.webp" alt="Classic" height="200">
+                <div class="service-info">
+                    <h6>Classic</h6>
+                    <p>Price: 499</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="lashes" data-service="cat-eye-lashes" onclick="selectServiceAndBook('cat-eye-lashes')">
+                <img src="images/cateye.webp" alt="Cat Eye" height="200">
+                <div class="service-info">
+                    <h6>Cat Eye</h6>
+                    <p>Price: 599</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="lashes" data-service="wispy-lashes" onclick="selectServiceAndBook('wispy-lashes')">
+                <img src="images/wispy.webp" alt="Wispy" height="200">
+                <div class="service-info">
+                    <h6>Wispy</h6>
+                    <p>Price: 599</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="lashes" data-service="volume-lashes" onclick="selectServiceAndBook('volume-lashes')">
+                <img src="images/volume.webp" alt="Volume" height="200">
+                <div class="service-info">
+                    <h6>Volume</h6>
+                    <p>Price: 699</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="lashes" data-service="lash-lift" onclick="selectServiceAndBook('lash-lift')">
+                <img src="images/lashlift.webp" alt="Lash Lift" height="200">
+                <div class="service-info">
+                    <h6>Lash Lift</h6>
+                    <p>Price: 399</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="lashes" data-service="lash-removal" onclick="selectServiceAndBook('lash-removal')">
+                <img src="images/removal.webp" alt="Lash Removal" height="200">
+                <div class="service-info">
+                    <h6>Lash Removal</h6>
+                    <p>Price: 100</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="lashes" data-service="brow-shave" onclick="selectServiceAndBook('brow-shave')">
+                <img src="images/shave.webp" alt="Brow Shave" height="200">
+                <div class="service-info">
+                    <h6>Brow Shave</h6>
+                    <p>Price: 50</p>
+                </div>
+            </div>
+            <div class="service-card" data-category="lashes" data-service="brow-tint" onclick="selectServiceAndBook('brow-tint')">
+                <img src="images/tint.webp" alt="Brow Tint and Last tint" height="200">
+                <div class="service-info">
+                    <h6>Brow Tint and Last tint</h6>
+                    <p>Price: 600</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="gallery-section">
+        <div class="gallery-header">
+            <span>FOLLOW US ON TIKTOK</span>
+            <a href="#" class="tiktok-link">@celebritystyleshairsalon</a>
+        </div>
+        <div class="gallery-scroll">
+            <img src="images/hair1.jpg" alt="Hair 1">
+            <img src="images/hair2.jpg" alt="Hair 2">
+            <img src="images/hair3.jpg" alt="Hair 3">
+            <img src="images/hair4.jpg" alt="Hair 4">
+            <img src="images/hair5.jpg" alt="Hair 5">
+            <img src="images/hair6.jpg" alt="Hair 6">
+        </div>
+    </section>
+    <section class="contact-section" id="contact-section" style="display:none;">
+        <div class="contact-confirmation">
+            <p class="first-paragraph">Celebrity Styles Hair Salon - Contact Form Confirmation</p>
+            <p class="second-paragraph">For faster appointments, you may also contact our Celebrity Styles Hair Salon Hotline at <span class="hotline">0917-1386-028 (CSHS)</span></p>
+            <div class="map-container">
+                <iframe src="https://www.google.com/maps?q=13.793415,121.005841&z=17&output=embed" width="100%" height="400" style="border:0; border-radius:12px;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            </div>
+        </div>
+    </section>
+    <section class="seasonal-section" id="seasonal-section" style="display:none;">
+        <div class="seasonal-container">
+            <div class="season-tabs">
+                <button class="season-tab active" data-season="summer">
+                    <svg class="season-icon" viewBox="0 0 24 24">
+                        <path d="m6.76 4.84-1.8-1.79-1.41 1.41 1.79 1.79zM4 10.5H1v2h3zm9-9.95h-2V3.5h2zm7.45 3.91-1.41-1.41-1.79 1.79 1.41 1.41zm-3.21 13.7 1.79 1.8 1.41-1.41-1.8-1.79zM20 10.5v2h3v-2zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6m-1 16.95h2V19.5h-2zm-7.45-3.91 1.41 1.41 1.79-1.8-1.41-1.41z"></path>
+                    </svg>
+                    Summer
+                </button>
+                <button class="season-tab" data-season="rainy">
+                    <svg class="season-icon" viewBox="0 0 24 24">
+                        <path d="M17.66 8 12 2.35 6.34 8C4.78 9.56 4 11.64 4 13.64s.78 4.11 2.34 5.67 3.61 2.35 5.66 2.35 4.1-.79 5.66-2.35S20 15.64 20 13.64 19.22 9.56 17.66 8M6 14c.01-2 .62-3.27 1.76-4.4L12 5.27l4.24 4.38C17.38 10.77 17.99 12 18 14z"></path>
+                    </svg>
+                    Rainy Season
+                </button>
+                <button class="season-tab" data-season="christmas">
+                    <svg class="season-icon" viewBox="0 0 24 24">
+                        <path d="M22 11h-4.17l3.24-3.24-1.41-1.42L15 11h-2V9l4.66-4.66-1.42-1.41L13 6.17V2h-2v4.17L7.76 2.93 6.34 4.34 11 9v2H9L4.34 6.34 2.93 7.76 6.17 11H2v2h4.17l-3.24 3.24 1.41 1.42L9 13h2v2l-4.66 4.66 1.42 1.41L11 17.83V22h2v-4.17l3.24 3.24 1.42-1.41L13 15v-2h2l4.66 4.66 1.41-1.42L17.83 13H22z"></path>
+                    </svg>
+                    Christmas Season
+                </button>
+            </div>
+
+            <div class="seasonal-content">
+                <div class="season-info active" data-season="summer">
+                    <div class="season-header">
+                        <svg class="season-icon" viewBox="0 0 24 24">
+                            <path d="m6.76 4.84-1.8-1.79-1.41 1.41 1.79 1.79zM4 10.5H1v2h3zm9-9.95h-2V3.5h2zm7.45 3.91-1.41-1.41-1.79 1.79 1.41 1.41zm-3.21 13.7 1.79 1.8 1.41-1.41-1.8-1.79zM20 10.5v2h3v-2zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6m-1 16.95h2V19.5h-2zm-7.45-3.91 1.41 1.41 1.79-1.8-1.41-1.41z"></path>
+                        </svg>
+                        <div class="season-text">
+                            <p>Summer heat and UV rays are your hair's worst enemies. Hydration becomes your top priority during this season. Use shampoos and conditioners infused with moisturizing ingredients like aloe vera or argan oil. Heat from the sun can weaken hair and dull its color. Wear a hat or scarf when outdoors for long periods. For extra protection, use leave-in spray with built-in SPF to shield against harmful UV rays. Swimming is a summer favorite, but chlorine and saltwater damage hair. Rinse hair with fresh water before swimming to reduce absorption of these elements. Use clarifying treatments weekly to remove residues.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="season-info" data-season="rainy">
+                    <div class="season-header">
+                        <svg class="season-icon" viewBox="0 0 24 24">
+                            <path d="M17.66 8 12 2.35 6.34 8C4.78 9.56 4 11.64 4 13.64s.78 4.11 2.34 5.67 3.61 2.35 5.66 2.35 4.1-.79 5.66-2.35S20 15.64 20 13.64 19.22 9.56 17.66 8M6 14c.01-2 .62-3.27 1.76-4.4L12 5.27l4.24 4.38C17.38 10.77 17.99 12 18 14z"></path>
+                        </svg>
+                        <div class="season-text">
+                            <p>Rainy season brings humidity that can cause frizz and make hair unmanageable. Use anti-frizz products and serums to keep hair smooth. Avoid over-washing as it can strip natural oils. Use a wide-tooth comb to detangle gently. Consider protective hairstyles to minimize exposure to moisture. Deep conditioning treatments are essential during this season to maintain hair health and prevent damage from environmental factors.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="season-info" data-season="christmas">
+                    <div class="season-header">
+                        <svg class="season-icon" viewBox="0 0 24 24">
+                            <path d="M22 11h-4.17l3.24-3.24-1.41-1.42L15 11h-2V9l4.66-4.66-1.42-1.41L13 6.17V2h-2v4.17L7.76 2.93 6.34 4.34 11 9v2H9L4.34 6.34 2.93 7.76 6.17 11H2v2h4.17l-3.24 3.24 1.41 1.42L9 13h2v2l-4.66 4.66 1.42 1.41L11 17.83V22h2v-4.17l3.24 3.24 1.42-1.41L13 15v-2h2l4.66 4.66 1.41-1.42L17.83 13H22z"></path>
+                        </svg>
+                        <div class="season-text">
+                            <p>Christmas season often means cold weather and indoor heating that can dry out hair. Use moisturizing shampoos and conditioners. Consider using a humidifier indoors to maintain moisture levels. Protect hair from cold winds with hats or scarves. Regular deep conditioning treatments help combat dryness. Avoid excessive heat styling and use heat protectants when necessary.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="featured-treatments">
+                <h4>Featured Treatment</h4>
+                <div class="treatment-slider">
+                    <button class="treatment-prev">Previous</button>
+                    <div class="treatment-slides">
+                        <div class="treatment-card active">
+                            <img src="images/ktouch.jpg" alt="K Touch Keratin Care" height="200">
+                            <div class="treatment-info">
+                                <h6>K Touch Keratin Care</h6>
+                                <p>Keratin Zero Formaldehyde, Keratin Shampoo, Keratin Conditioner</p>
+                            </div>
+                        </div>
+                        <div class="treatment-card">
+                            <img src="images/magic.jpg" alt="Magic Keratin Plus with Collagen" height="200">
+                            <div class="treatment-info">
+                                <h6>Magic Keratin Plus with Collagen</h6>
+                                <p>Clarifying Shampoo</p>
+                            </div>
+                        </div>
+                        <div class="treatment-card">
+                            <img src="images/hairbotox.webp" alt="Hair Botox" height="200">
+                            <div class="treatment-info">
+                                <h6>Hair Botox</h6>
+                                <p>Repair Damaged Hair, Anti frizz, Extreme Straightening & Smoothing</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="treatment-next">Next</button>
+                    <ul class="treatment-dots">
+                        <li class="active"><button>1</button></li>
+                        <li><button>2</button></li>
+                        <li><button>3</button></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+    <footer>
+        <div class="footer-container">
+            <div class="footer-col">
+                <h6>Celebrity Styles Hair Salon</h6>
+                <p>Where beauty meets elegance. Book now and experience the glow!</p>
+            </div>
+            <div class="footer-col">
+                <h6>Quick Links</h6>
+                <a href="/">Home</a><br>
+                <a href="/services">Services</a><br>
+                <a href="/promos">Promos</a><br>
+                <a href="/booking">Booking</a>
+            </div>
+            <div class="footer-col">
+                <h6>Contact Us</h6>
+                <p><svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02z" fill="#444"/></svg> (0917)-1386-028</p>
+                <p><svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2m0 4-8 5-8-5V6l8 5 8-5z" fill="#444"/></svg> info@celebritystyleshairsalon@gmail.com</p>
+                <p>Bauan, Batangas</p>
+            </div>
+            <div class="footer-col">
+                <h6>Follow Us</h6>
+                <a href="https://web.facebook.com/celebstyles.hairsalon" target="_blank" rel="noopener" aria-label="Facebook">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2m13 2h-2.5A3.5 3.5 0 0 0 12 8.5V11h-2v3h2v7h3v-7h3v-3h-3V9a1 1 0 0 1 1-1h2V5z" fill="#1877F3"/></svg>
+                </a>
+            </div>
+        </div>
+        <div class="footer-bottom">© 2025 Celebrity Styles Salon. All rights reserved.</div>
+    </footer>
+    <!-- Booking Modal -->
+    <div class="booking-modal" id="bookingModal">
+        <div class="booking-container">
+            <button class="close-btn" onclick="closeBookingModal()">&times;</button>
+            
+            <h3 class="booking-title">Book Now!</h3>
+            
+            <form id="bookingForm">
+                <div class="form-group">
+                    <label for="fullName">Full Name <span class="required">*</span></label>
+                    <input type="text" id="fullName" name="fullName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="mobileNumber">Mobile Number <span class="required">*</span></label>
+                    <input type="tel" id="mobileNumber" name="mobileNumber" placeholder="(09xxxxxxxxx)" maxlength="11" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email Address <span class="required">*</span></label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="service">Service <span class="required">*</span></label>
+                        <select id="service" name="service" required>
+                            <option value="">Select a service...</option>
+                            <option value="manicure">Manicure - ₱150</option>
+                            <option value="pedicure">Pedicure - ₱199</option>
+                            <option value="footspa">Footspa - ₱499</option>
+                            <option value="manicure-gel">Manicure Gel Polish - ₱499</option>
+                            <option value="manipedi-gel">Mani/Pedi Gel Polish - ₱849</option>
+                            <option value="pedi-gel-footspa">Pedi Gel Polish w/ Footspa - ₱849</option>
+                            <option value="pedi-gel">Pedi w/ Gel Polish - ₱499</option>
+                            <option value="soft-gel-extension">Soft Gel Extension w/ Gel Polish - ₱999</option>
+                            <option value="foot-massage">Foot massage 30 minutes - ₱150</option>
+                            <option value="hand-massage">Hand massage 30 minutes - ₱150</option>
+                            <option value="traditional-hamu">Traditional Hair and Make up - ₱1000</option>
+                            <option value="glam-hamu">Glam Hair & Make up - ₱1500</option>
+                            <option value="airbrush-hamu">Air Brush, Hair & Make up - ₱2000</option>
+                            <option value="classic-lashes">Classic - ₱499</option>
+                            <option value="cat-eye-lashes">Cat Eye - ₱599</option>
+                            <option value="wispy-lashes">Wispy - ₱599</option>
+                            <option value="volume-lashes">Volume - ₱699</option>
+                            <option value="lash-lift">Lash Lift - ₱399</option>
+                            <option value="lash-removal">Lash Removal - ₱100</option>
+                            <option value="brow-shave">Brow Shave - ₱50</option>
+                            <option value="brow-tint">Brow Tint and Last tint - ₱600</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="searchService">Available Employees</label>
+                        <select id="searchService" name="searchService" placeholder="Select employee...">
+                            <option value="">Select an employee...</option>
+                            <option value="employee1">Sarah - Manicure Specialist</option>
+                            <option value="employee2">Maria - Hair & Makeup Artist</option>
+                            <option value="employee3">Jenny - Lash Specialist</option>
+                            <option value="employee4">Ana - Pedicure Specialist</option>
+                            <option value="employee5">Lisa - Massage Therapist</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="service-details" id="serviceDetails" style="display: none;">
+                    <h4>Service Details:</h4>
+                    <p><strong>Estimated Price:</strong> <span id="estimatedPrice"></span></p>
+                    <p><strong>Estimated Duration:</strong> <span id="estimatedDuration"></span></p>
+                    <p style="font-size: 14px; color: #6c757d; font-style: italic;" id="serviceDescription"></p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="appointmentDate">Date <span class="required">*</span></label>
+                    <input type="date" id="appointmentDate" name="appointmentDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="clientNotes">Special Requests / Notes</label>
+                    <textarea id="clientNotes" name="clientNotes" rows="4" placeholder="Any special requests, allergies, or additional information you'd like us to know..."></textarea>
+                </div>
+                
+                <div class="time-slots">
+                    <h5>Reservation Time</h5>
+                    <div class="time-chips">
+                        <div class="time-chip" data-time="08:00">08AM</div>
+                        <div class="time-chip" data-time="09:00">09AM</div>
+                        <div class="time-chip" data-time="10:00">10AM</div>
+                        <div class="time-chip" data-time="11:00">11AM</div>
+                        <div class="time-chip" data-time="13:00">01PM</div>
+                        <div class="time-chip" data-time="14:00">02PM</div>
+                        <div class="time-chip" data-time="15:00">03PM</div>
+                        <div class="time-chip" data-time="16:00">04PM</div>
+                        <div class="time-chip" data-time="17:00">05PM</div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="submit-btn">RESERVE</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Booking History Modal -->
+    <div class="history-modal" id="history-modal">
+        <div class="history-container">
+            <div class="history-header">
+                <h2>Booking History</h2>
+                <button class="close-btn" onclick="closeHistoryModal()">&times;</button>
+            </div>
+            <div class="history-content">
+                <div class="history-filters">
+                    <select id="status-filter">
+                        <option value="all">All Status</option>
+                        <option value="confirmed">Confirmed</option>
+                        <option value="pending">Pending</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                    <input type="date" id="date-filter" placeholder="Filter by date">
+                </div>
+                <div class="history-table-container">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Service</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                                <th>Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            <!-- Booking history will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="history-empty" id="history-empty" style="display: none;">
+                    <p>No booking history found.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+    <script src="user-profile.js"></script>
+</body>
+</html>
