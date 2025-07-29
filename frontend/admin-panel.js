@@ -160,7 +160,9 @@ async function deleteEmployee(id) {
     const confirmed = await showConfirmDialog(
         `Delete Employee`,
         `Are you sure you want to delete employee "${employee.name}"?`,
-        'This action cannot be undone and will permanently remove the employee from the system.'
+        'This action cannot be undone and will permanently remove the employee from the system.',
+        'Delete',
+        '#f44336'
     );
 
     if (confirmed) {
@@ -333,16 +335,20 @@ function populateReservationTable(data = reservations) {
             </td>
             <td>
                 <div class="action-buttons">
-                    <button class="action-btn edit-btn" onclick="editReservation('${reservation._id}')" title="Edit">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                        </svg>
-                    </button>
-                    <button class="action-btn delete-btn" onclick="deleteReservation('${reservation._id}')" title="Delete">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                        </svg>
-                    </button>
+                    ${reservation.status !== 'confirmed' && reservation.status !== 'completed' ? 
+                        `<button class="action-btn confirm-btn" onclick="confirmReservation('${reservation._id}')" title="Confirm">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                        </button>` : ''
+                    }
+                    ${reservation.status !== 'cancelled' ? 
+                        `<button class="action-btn cancel-btn" onclick="cancelReservation('${reservation._id}')" title="Cancel">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                            </svg>
+                        </button>` : ''
+                    }
                 </div>
             </td>
         `;
@@ -507,7 +513,7 @@ function showNotification(message, type = 'info') {
 }
 
 // Custom confirmation dialog function
-function showConfirmDialog(title, message, description = '') {
+function showConfirmDialog(title, message, description = '', confirmButtonText = 'Confirm', confirmButtonColor = '#4caf50') {
     return new Promise((resolve) => {
         // Create modal overlay
         const overlay = document.createElement('div');
@@ -554,7 +560,7 @@ function showConfirmDialog(title, message, description = '') {
                     font-size: 0.875rem;
                 ">Cancel</button>
                 <button id="confirm-btn" style="
-                    background: #d32f2f;
+                    background: ${confirmButtonColor};
                     border: none;
                     padding: 8px 16px;
                     border-radius: 4px;
@@ -562,7 +568,7 @@ function showConfirmDialog(title, message, description = '') {
                     color: white;
                     font-size: 0.875rem;
                     font-weight: 500;
-                ">Delete</button>
+                ">${confirmButtonText}</button>
             </div>
         `;
 
@@ -728,7 +734,9 @@ async function deleteUser(id) {
     const confirmed = await showConfirmDialog(
         `Delete User`,
         `Are you sure you want to delete user "${user.name || user.email}"?`,
-        'This action cannot be undone and will permanently remove the user from the system.'
+        'This action cannot be undone and will permanently remove the user from the system.',
+        'Delete',
+        '#f44336'
     );
 
     if (confirmed) {
@@ -758,14 +766,7 @@ async function deleteUser(id) {
     }
 }
 
-function editReservation(id) {
-    const reservation = reservations.find(r => r._id === id);
-    if (reservation) {
-        alert(`Edit reservation: ${reservation.fullName} - ${reservation.service}`);
-    }
-}
-
-async function deleteReservation(id) {
+async function confirmReservation(id) {
     const reservation = reservations.find(r => r._id === id);
     if (!reservation) {
         showNotification('Reservation not found', 'error');
@@ -774,33 +775,82 @@ async function deleteReservation(id) {
 
     // Show confirmation dialog
     const confirmed = await showConfirmDialog(
-        `Delete Reservation`,
-        `Are you sure you want to delete reservation for "${reservation.fullName}"?`,
-        'This action cannot be undone and will permanently remove the reservation from the system.'
+        `Confirm Reservation`,
+        `Are you sure you want to confirm reservation for "${reservation.fullName}"?`,
+        'This will mark the reservation as confirmed and notify the customer.',
+        'Confirm',
+        '#4caf50'
     );
 
     if (confirmed) {
         try {
-            const response = await fetch(`${API_BASE_URL}/admin/bookings/${id}`, {
-                method: 'DELETE',
+            const response = await fetch(`${API_BASE_URL}/admin/bookings/${id}/status`, {
+                method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${getAuthToken()}`
-                }
+                    'Authorization': `Bearer ${getAuthToken()}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: 'confirmed' })
             });
             
             const data = await response.json();
             
             if (data.success) {
-                showNotification(`Reservation for "${reservation.fullName}" deleted successfully`, 'success');
+                showNotification(`Reservation for "${reservation.fullName}" confirmed successfully`, 'success');
                 await fetchReservations(); // Refresh the table
                 return true;
             } else {
-                showNotification(data.message || 'Failed to delete reservation', 'error');
+                showNotification(data.message || 'Failed to confirm reservation', 'error');
                 return false;
             }
         } catch (error) {
-            console.error('Error deleting reservation:', error);
-            showNotification('Error deleting reservation: ' + error.message, 'error');
+            console.error('Error confirming reservation:', error);
+            showNotification('Error confirming reservation: ' + error.message, 'error');
+            return false;
+        }
+    }
+}
+
+async function cancelReservation(id) {
+    const reservation = reservations.find(r => r._id === id);
+    if (!reservation) {
+        showNotification('Reservation not found', 'error');
+        return;
+    }
+
+    // Show confirmation dialog
+    const confirmed = await showConfirmDialog(
+        `Cancel Reservation`,
+        `Are you sure you want to cancel reservation for "${reservation.fullName}"?`,
+        'This will mark the reservation as cancelled and notify the customer.',
+        'Cancel',
+        '#f44336'
+    );
+
+    if (confirmed) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/admin/bookings/${id}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${getAuthToken()}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: 'cancelled' })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification(`Reservation for "${reservation.fullName}" cancelled successfully`, 'success');
+                await fetchReservations(); // Refresh the table
+                return true;
+            } else {
+                showNotification(data.message || 'Failed to cancel reservation', 'error');
+                return false;
+            }
+        } catch (error) {
+            console.error('Error cancelling reservation:', error);
+            showNotification('Error cancelling reservation: ' + error.message, 'error');
             return false;
         }
     }
