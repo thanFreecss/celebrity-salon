@@ -416,21 +416,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Use the correct field names from the user data
                 if (fullNameInput && user.name) {
                     fullNameInput.value = user.name;
-                    fullNameInput.readOnly = true;
-                    fullNameInput.style.backgroundColor = '#f8f9fa';
-                    fullNameInput.title = 'This field is auto-filled from your account';
+                    fullNameInput.readOnly = false; // Make it editable
+                    fullNameInput.style.backgroundColor = '#fff'; // Normal background
+                    fullNameInput.style.cursor = 'text'; // Normal cursor
+                    fullNameInput.title = 'This field is auto-filled from your account. You can edit it if needed.';
                 }
                 if (mobileNumberInput && user.phone) {
                     mobileNumberInput.value = user.phone;
-                    mobileNumberInput.readOnly = true;
-                    mobileNumberInput.style.backgroundColor = '#f8f9fa';
-                    mobileNumberInput.title = 'This field is auto-filled from your account';
+                    mobileNumberInput.readOnly = false; // Make it editable
+                    mobileNumberInput.style.backgroundColor = '#fff'; // Normal background
+                    mobileNumberInput.style.cursor = 'text'; // Normal cursor
+                    mobileNumberInput.title = 'This field is auto-filled from your account. You can edit it if needed.';
                 }
                 if (emailInput && user.email) {
                     emailInput.value = user.email;
-                    emailInput.readOnly = true;
-                    emailInput.style.backgroundColor = '#f8f9fa';
-                    emailInput.title = 'This field is auto-filled from your account';
+                    emailInput.readOnly = false; // Make it editable
+                    emailInput.style.backgroundColor = '#fff'; // Normal background
+                    emailInput.style.cursor = 'text'; // Normal cursor
+                    emailInput.title = 'This field is auto-filled from your account. You can edit it if needed.';
                 }
             } catch (error) {
                 console.error('Error parsing user data:', error);
@@ -451,7 +454,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const bookingForm = document.getElementById('bookingForm');
         if (bookingForm) {
             bookingForm.reset();
-            // Reset read-only fields
+            // Reset fields to normal state
             const fullNameInput = document.getElementById('fullName');
             const mobileNumberInput = document.getElementById('mobileNumber');
             const emailInput = document.getElementById('email');
@@ -459,16 +462,19 @@ document.addEventListener('DOMContentLoaded', function() {
             if (fullNameInput) {
                 fullNameInput.readOnly = false;
                 fullNameInput.style.backgroundColor = '';
+                fullNameInput.style.cursor = '';
                 fullNameInput.title = '';
             }
             if (mobileNumberInput) {
                 mobileNumberInput.readOnly = false;
                 mobileNumberInput.style.backgroundColor = '';
+                mobileNumberInput.style.cursor = '';
                 mobileNumberInput.title = '';
             }
             if (emailInput) {
                 emailInput.readOnly = false;
                 emailInput.style.backgroundColor = '';
+                emailInput.style.cursor = '';
                 emailInput.title = '';
             }
         }

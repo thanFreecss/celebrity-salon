@@ -53,7 +53,7 @@ nav ul {
 nav ul li a {
     text-decoration: none;
     color: #3d2e2e;
-    font-weight: 600;
+    font-weight: 800;
     font-size: 16px;
     letter-spacing: 1px;
     transition: color 0.2s;
@@ -93,20 +93,35 @@ main {
 }
 
 .cta {
-    background: #6d3b3b;
-    color: #fff;
-    border: none;
-    padding: 16px 32px;
-    font-size: 1.1rem;
-    font-weight: bold;
-    border-radius: 4px;
+    padding: 17px 40px;
+    border-radius: 50px;
     cursor: pointer;
-    transition: background 0.2s;
-    box-shadow: 1px 2px 8px rgba(0,0,0,0.1);
+    border: 0;
+    background-color: white;
+    box-shadow: rgb(0 0 0 / 5%) 0 0 8px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-size: 15px;
+    transition: all 0.5s ease;
+    color: #6d3b3b;
+    font-weight: 700;
+    font-family: 'Segoe UI', Arial, sans-serif;
 }
 
 .cta:hover {
-    background: #b85c5c;
+    letter-spacing: 3px;
+    background-color: #6d3b3b;
+    color: hsl(0, 0%, 100%);
+    box-shadow: rgb(109 59 59) 0px 7px 29px 0px;
+}
+
+.cta:active {
+    letter-spacing: 3px;
+    background-color: #6d3b3b;
+    color: hsl(0, 0%, 100%);
+    box-shadow: rgb(109 59 59) 0px 0px 0px 0px;
+    transform: translateY(10px);
+    transition: 100ms;
 }
 
 .gallery-section {
@@ -218,6 +233,25 @@ footer {
 .footer-col svg {
     vertical-align: middle;
     margin-right: 8px;
+}
+
+/* Contact section specific styles */
+.footer-col p {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.footer-col p svg {
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+/* Facebook icon specific styling */
+.footer-col a svg {
+    width: 28px;
+    height: 28px;
+    margin-right: 0;
 }
 
 .footer-bottom {
@@ -1273,3 +1307,5 @@ footer {
         justify-content: center;
     }
 }
+
+
