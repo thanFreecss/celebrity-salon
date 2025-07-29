@@ -135,8 +135,8 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="phone">Phone Number</label>
-                    <input type="tel" id="phone" name="phone" required>
+                                            <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" placeholder="(09xxxxxxxxx)" maxlength="11" pattern="[0-9]{11}" required>
                 </div>
                 
                 <div class="form-group">
@@ -285,6 +285,44 @@
                 submitBtn.disabled = false;
             }
         });
+
+        // Phone number validation
+        function setupPhoneValidation() {
+            const phoneInput = document.getElementById('phone');
+            
+            if (phoneInput) {
+                // Only allow numbers
+                phoneInput.addEventListener('input', function(e) {
+                    // Remove any non-numeric characters
+                    this.value = this.value.replace(/[^0-9]/g, '');
+                    
+                    // Limit to 11 digits
+                    if (this.value.length > 11) {
+                        this.value = this.value.slice(0, 11);
+                    }
+                });
+
+                // Prevent non-numeric key presses
+                phoneInput.addEventListener('keypress', function(e) {
+                    const charCode = e.which ? e.which : e.keyCode;
+                    if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+                        e.preventDefault();
+                    }
+                });
+
+                // Validate on blur
+                phoneInput.addEventListener('blur', function() {
+                    if (this.value.length > 0 && this.value.length !== 11) {
+                        this.setCustomValidity('Phone number must be exactly 11 digits');
+                    } else {
+                        this.setCustomValidity('');
+                    }
+                });
+            }
+        }
+
+        // Initialize phone validation when page loads
+        setupPhoneValidation();
     </script>
     <script src="config.js"></script>
 </body>

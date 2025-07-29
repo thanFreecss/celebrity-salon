@@ -1131,6 +1131,146 @@
             height: 16px;
             fill: currentColor;
         }
+
+        /* Sign Out Confirmation Modal */
+        .signout-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .signout-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .signout-container {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .signout-card {
+            padding: 32px;
+        }
+
+        .signout-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .signout-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: #ffebee;
+            color: #d32f2f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .signout-icon svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .signout-title {
+            margin: 0 0 12px 0;
+            color: #333;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .signout-message {
+            margin: 0;
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .signout-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .btn-danger {
+            background: #d32f2f;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .btn-danger:hover {
+            background: #b71c1c;
+        }
+
+        @media (max-width: 768px) {
+            .signout-container {
+                margin: 20px;
+                max-width: none;
+            }
+            
+            .signout-card {
+                padding: 24px;
+            }
+            
+            .signout-actions {
+                flex-direction: column;
+            }
+        }
     </style>
+
+    <!-- Sign Out Confirmation Modal -->
+    <div class="signout-modal" id="signout-modal">
+        <div class="signout-container">
+            <div class="signout-card">
+                <div class="signout-header">
+                    <div class="signout-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                        </svg>
+                    </div>
+                    <h2 class="signout-title">Sign Out</h2>
+                    <p class="signout-message">Are you sure you want to sign out? You will need to log in again to access the admin panel.</p>
+                </div>
+
+                <div class="signout-actions">
+                    <button type="button" class="btn-cancel" onclick="closeAdminSignoutModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                        Cancel
+                    </button>
+                    <button type="button" class="btn-danger" onclick="confirmAdminSignOut()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                        </svg>
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html> 

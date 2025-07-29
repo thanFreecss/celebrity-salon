@@ -548,8 +548,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Profile settings function
     window.openProfileSettings = function() {
-        // For now, just show an alert. You can implement a profile settings modal later
-        alert('Profile Settings - Coming Soon!');
+        // Open the profile settings modal
+        openProfileModal();
     };
 
     // History function (replaces the old history button)
@@ -559,5 +559,190 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             alert('Please log in to view your booking history.');
         }
+    };
+
+    // Profile Modal Functions
+    window.openProfileModal = function() {
+        const modal = document.getElementById('profile-modal');
+        modal.classList.add('show');
+        loadUserProfile();
+    };
+
+    window.closeProfileModal = function() {
+        const modal = document.getElementById('profile-modal');
+        modal.classList.remove('show');
+    };
+
+    function loadUserProfile() {
+        const userData = localStorage.getItem('userData');
+        if (userData) {
+            try {
+                const user = JSON.parse(userData);
+                
+                // Update header
+                document.getElementById('profile-name').textContent = user.name || 'User';
+                document.getElementById('profile-email').textContent = user.email || 'No email';
+                
+                // Fill form fields
+                document.getElementById('profile-name-input').value = user.name || '';
+                document.getElementById('profile-phone-input').value = user.phone || '';
+                document.getElementById('profile-email-input').value = user.email || '';
+                
+            } catch (error) {
+                console.error('Error parsing user data:', error);
+                showNotification('Error loading profile data', 'error');
+            }
+        } else {
+            showNotification('No user data found. Please log in.', 'warning');
+            setTimeout(() => {
+                closeProfileModal();
+            }, 2000);
+        }
+    }
+
+    // Handle profile form submission
+    document.getElementById('profile-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const saveBtn = document.getElementById('save-btn');
+        const originalText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Saving...';
+        saveBtn.disabled = true;
+
+        try {
+            const formData = {
+                name: document.getElementById('profile-name-input').value,
+                phone: document.getElementById('profile-phone-input').value,
+                email: document.getElementById('profile-email-input').value
+            };
+
+            const token = localStorage.getItem('userToken');
+            const API_BASE_URL = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL : 'http://localhost:5000/api';
+
+            const response = await fetch(`${API_BASE_URL}/users/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Update localStorage with new user data
+                const updatedUserData = {
+                    ...JSON.parse(localStorage.getItem('userData')),
+                    name: formData.name,
+                    phone: formData.phone,
+                    email: formData.email
+                };
+                localStorage.setItem('userData', JSON.stringify(updatedUserData));
+                
+                // Update header
+                document.getElementById('profile-name').textContent = formData.name;
+                document.getElementById('profile-email').textContent = formData.email;
+                
+                showNotification('Profile updated successfully!', 'success');
+            } else {
+                const errorData = await response.json();
+                showNotification(errorData.message || 'Failed to update profile', 'error');
+            }
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            showNotification('Error updating profile. Please try again.', 'error');
+        } finally {
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        }
+    });
+
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Show notification
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 100);
+        
+        // Hide notification after 3 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+
+    // Close profile modal when clicking outside
+    const profileModal = document.getElementById('profile-modal');
+    if (profileModal) {
+        profileModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeProfileModal();
+            }
+        });
+    }
+
+    // Add keyboard support for closing profile modal
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const profileModal = document.getElementById('profile-modal');
+            if (profileModal && profileModal.classList.contains('show')) {
+                closeProfileModal();
+            }
+        }
+    });
+
+    // Phone number validation for all phone inputs
+    function setupPhoneValidation() {
+        const phoneInputs = document.querySelectorAll('input[type="tel"]');
+        
+        phoneInputs.forEach(input => {
+            // Only allow numbers
+            input.addEventListener('input', function(e) {
+                // Remove any non-numeric characters
+                this.value = this.value.replace(/[^0-9]/g, '');
+                
+                // Limit to 11 digits
+                if (this.value.length > 11) {
+                    this.value = this.value.slice(0, 11);
+                }
+            });
+
+            // Prevent non-numeric key presses
+            input.addEventListener('keypress', function(e) {
+                const charCode = e.which ? e.which : e.keyCode;
+                if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+                    e.preventDefault();
+                }
+            });
+
+            // Validate on blur
+            input.addEventListener('blur', function() {
+                if (this.value.length > 0 && this.value.length !== 11) {
+                    this.setCustomValidity('Phone number must be exactly 11 digits');
+                } else {
+                    this.setCustomValidity('');
+                }
+            });
+        });
+    }
+
+    // Initialize phone validation when page loads
+    setupPhoneValidation();
+
+    // Re-initialize phone validation when profile modal opens
+    const originalOpenProfileModal = window.openProfileModal;
+    window.openProfileModal = function() {
+        originalOpenProfileModal();
+        setTimeout(setupPhoneValidation, 100); // Small delay to ensure modal is rendered
     };
 });

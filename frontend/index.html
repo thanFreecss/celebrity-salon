@@ -362,7 +362,7 @@
             <div class="featured-treatments">
                 <h4>Featured Treatment</h4>
                 <div class="treatment-slider">
-                    <button class="treatment-prev">Previous</button>
+                    <button class="treatment-prev">&#8592;</button>
                     <div class="treatment-slides">
                         <div class="treatment-card active">
                             <img src="images/ktouch.jpg" alt="K Touch Keratin Care" height="200">
@@ -379,19 +379,14 @@
                             </div>
                         </div>
                         <div class="treatment-card">
-                            <img src="images/hairbotox.webp" alt="Hair Botox" height="200">
+                            <img src="images/hairbotox.webp" alt="Hair Botox" height="250">
                             <div class="treatment-info">
                                 <h6>Hair Botox</h6>
                                 <p>Repair Damaged Hair, Anti frizz, Extreme Straightening & Smoothing</p>
                             </div>
                         </div>
                     </div>
-                    <button class="treatment-next">Next</button>
-                    <ul class="treatment-dots">
-                        <li class="active"><button>1</button></li>
-                        <li><button>2</button></li>
-                        <li><button>3</button></li>
-                    </ul>
+                    <button class="treatment-next">&#8594;</button>
                 </div>
             </div>
         </div>
@@ -564,6 +559,103 @@
                 </div>
                 <div class="history-empty" id="history-empty" style="display: none;">
                     <p>No booking history found.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Settings Modal -->
+    <div class="profile-modal" id="profile-modal">
+        <div class="profile-container">
+            <div class="profile-card">
+                <div class="profile-header">
+                    <button class="close-btn" onclick="closeProfileModal()">&times;</button>
+                    <div class="profile-avatar">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                    </div>
+                    <h1 class="profile-name" id="profile-name">Loading...</h1>
+                    <p class="profile-email" id="profile-email">loading@email.com</p>
+                </div>
+
+                <div class="profile-content">
+                    <h2 class="section-title">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                        Personal Information
+                    </h2>
+
+                    <form id="profile-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label" for="profile-name-input">Full Name</label>
+                                <input type="text" id="profile-name-input" name="name" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="profile-phone-input">Phone Number</label>
+                                <input type="tel" id="profile-phone-input" name="phone" class="form-input" placeholder="(09xxxxxxxxx)" maxlength="11" pattern="[0-9]{11}" required>
+                            </div>
+                            <div class="form-group full-width">
+                                <label class="form-label" for="profile-email-input">Email Address</label>
+                                <input type="email" id="profile-email-input" name="email" class="form-input" required disabled>
+                            </div>
+                        </div>
+
+                        <div class="button-group">
+                            <button type="button" class="btn btn-secondary" onclick="closeProfileModal()">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                                </svg>
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="save-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                </svg>
+                                Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sign Out Confirmation Modal -->
+    <div class="signout-modal" id="signout-modal">
+        <div class="signout-container">
+            <div class="signout-card">
+                <div class="signout-header">
+                    <div class="signout-icon">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                        </svg>
+                    </div>
+                    <h2 class="signout-title">Sign Out</h2>
+                    <p class="signout-message">Are you sure you want to sign out? You will need to log in again to access your account.</p>
+                </div>
+
+                <div class="signout-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeSignoutModal()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="confirmSignOut()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
+                        </svg>
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
                 </div>
             </div>
         </div>

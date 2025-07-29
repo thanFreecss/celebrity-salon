@@ -81,8 +81,19 @@ class UserProfile {
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.closeHistoryModal();
+                this.closeSignoutModal();
             }
         });
+
+        // Sign out modal background click
+        const signoutModal = document.getElementById('signout-modal');
+        if (signoutModal) {
+            signoutModal.addEventListener('click', (e) => {
+                if (e.target.id === 'signout-modal') {
+                    this.closeSignoutModal();
+                }
+            });
+        }
 
         // Filter changes
         const statusFilter = document.getElementById('status-filter');
@@ -124,9 +135,18 @@ class UserProfile {
     }
 
     showSignOutConfirm() {
-        if (confirm('Are you sure you want to sign out?')) {
-            this.logout();
-        }
+        const modal = document.getElementById('signout-modal');
+        modal.classList.add('show');
+    }
+
+    closeSignoutModal() {
+        const modal = document.getElementById('signout-modal');
+        modal.classList.remove('show');
+    }
+
+    confirmSignOut() {
+        this.closeSignoutModal();
+        this.logout();
     }
 
     logout() {
@@ -429,5 +449,18 @@ function closeBookingDetailsModal() {
     const modal = document.querySelector('.booking-details-modal');
     if (modal) {
         modal.remove();
+    }
+}
+
+// Global functions for sign out modal interactions
+function closeSignoutModal() {
+    if (window.userProfile) {
+        window.userProfile.closeSignoutModal();
+    }
+}
+
+function confirmSignOut() {
+    if (window.userProfile) {
+        window.userProfile.confirmSignOut();
     }
 } 

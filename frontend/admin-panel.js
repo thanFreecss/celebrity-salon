@@ -838,14 +838,7 @@ function setupEventListeners() {
 
             // Sign out functionality
         document.getElementById('signout-button').addEventListener('click', function() {
-            if (confirm('Are you sure you want to sign out?')) {
-                // Clear auth tokens
-                localStorage.removeItem('adminToken');
-                localStorage.removeItem('adminData');
-                sessionStorage.removeItem('adminToken');
-                // Redirect to admin login page
-                window.location.href = 'admin-login.html';
-            }
+            showAdminSignoutModal();
         });
 }
 
@@ -895,4 +888,45 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize admin panel
     initializeAdminPanel();
+});
+
+// Admin Sign Out Modal Functions
+function showAdminSignoutModal() {
+    const modal = document.getElementById('signout-modal');
+    modal.classList.add('show');
+}
+
+function closeAdminSignoutModal() {
+    const modal = document.getElementById('signout-modal');
+    modal.classList.remove('show');
+}
+
+function confirmAdminSignOut() {
+    closeAdminSignoutModal();
+    // Clear auth tokens
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminData');
+    sessionStorage.removeItem('adminToken');
+    // Redirect to admin login page
+    window.location.href = 'admin-login.html';
+}
+
+// Add event listeners for admin sign out modal
+document.addEventListener('DOMContentLoaded', function() {
+    // Sign out modal background click
+    const signoutModal = document.getElementById('signout-modal');
+    if (signoutModal) {
+        signoutModal.addEventListener('click', function(e) {
+            if (e.target.id === 'signout-modal') {
+                closeAdminSignoutModal();
+            }
+        });
+    }
+
+    // Add keyboard support for closing modal
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeAdminSignoutModal();
+        }
+    });
 }); 
