@@ -275,19 +275,63 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Function to update available employees based on selected service
-    function updateAvailableEmployees(selectedService) {
-        const employeeSelect = document.getElementById('searchService');
+    async function updateAvailableEmployees(selectedService) {
+        const employeeSelect = document.getElementById('selectedEmployee');
         
-        // TODO: Backend Integration - This will be replaced with API call
-        // to get employees qualified for the selected service
-        console.log('Selected service:', selectedService);
-        console.log('TODO: Backend will filter employees for service:', selectedService);
+        if (!selectedService) {
+            // Clear employee options if no service is selected
+            employeeSelect.innerHTML = '<option value="">Select an employee</option>';
+            return;
+        }
         
-        // For now, show all employees (this will be replaced with filtered results)
-        // In the backend, this will be:
-        // - API call to get employees by service category
-        // - Filter employees based on availability
-        // - Return only qualified employees for the selected service
+        try {
+            console.log('Fetching employees for service:', selectedService);
+            
+            // Call the backend API to get employees for the selected service
+            const apiUrl = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL + `/employees/service/${selectedService}` : `http://localhost:5000/api/employees/service/${selectedService}`;
+            const response = await fetch(apiUrl);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const employees = data.data;
+                console.log(`Found ${employees.length} employees for service: ${selectedService}`);
+                
+                // Clear existing options
+                employeeSelect.innerHTML = '<option value="">Select an employee</option>';
+                
+                if (employees.length === 0) {
+                    // No employees available for this service
+                    employeeSelect.innerHTML = '<option value="">No employees available for this service</option>';
+                    employeeSelect.disabled = true;
+                } else {
+                    // Add employee options
+                    employees.forEach(employee => {
+                        const option = document.createElement('option');
+                        option.value = employee._id;
+                        
+                        // Show indication if employee has no specialties
+                        const specialtyIndicator = employee.specialties.length === 0 ? ' (Available for all services)' : '';
+                        option.textContent = `${employee.name} (${employee.position})${specialtyIndicator}`;
+                        
+                        employeeSelect.appendChild(option);
+                    });
+                    employeeSelect.disabled = false;
+                }
+            } else {
+                console.error('Failed to fetch employees:', data.message);
+                employeeSelect.innerHTML = '<option value="">Error loading employees</option>';
+                employeeSelect.disabled = true;
+            }
+        } catch (error) {
+            console.error('Error fetching employees:', error);
+            employeeSelect.innerHTML = '<option value="">Error loading employees</option>';
+            employeeSelect.disabled = true;
+        }
     }
 
     // Time slot selection
@@ -314,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 mobileNumber: formData.get('mobileNumber'),
                 email: formData.get('email'),
                 service: formData.get('service'),
-                selectedEmployee: formData.get('searchService'),
+                selectedEmployee: formData.get('selectedEmployee'),
                 appointmentDate: formData.get('appointmentDate'),
                 selectedTime: selectedTime,
                 clientNotes: formData.get('clientNotes')
@@ -329,6 +373,29 @@ document.addEventListener('DOMContentLoaded', function() {
             // Validate required fields
             if (!bookingData.fullName || !bookingData.mobileNumber || !bookingData.email || !bookingData.service || !bookingData.appointmentDate) {
                 alert('Please fill in all required fields');
+                return;
+            }
+            
+            // Validate phone number format
+            if (!/^[0-9]{11}$/.test(bookingData.mobileNumber)) {
+                alert('Please enter a valid 11-digit phone number');
+                return;
+            }
+            
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(bookingData.email)) {
+                alert('Please enter a valid email address');
+                return;
+            }
+            
+            // Validate appointment date (must be in the future)
+            const appointmentDate = new Date(bookingData.appointmentDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            if (appointmentDate < today) {
+                alert('Please select a future date for your appointment');
                 return;
             }
             
@@ -603,6 +670,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle profile form submission
     document.getElementById('profile-form').addEventListener('submit', async function(e) {
         e.preventDefault();
+        
+        // Validate form data
+        const name = document.getElementById('profile-name-input').value.trim();
+        const phone = document.getElementById('profile-phone-input').value.trim();
+        const email = document.getElementById('profile-email-input').value.trim();
+        
+        if (!name || !phone || !email) {
+            showNotification('Please fill in all fields', 'error');
+            return;
+        }
+        
+        if (!/^[0-9]{11}$/.test(phone)) {
+            showNotification('Please enter a valid 11-digit phone number', 'error');
+            return;
+        }
+        
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            showNotification('Please enter a valid email address', 'error');
+            return;
+        }
         
         const saveBtn = document.getElementById('save-btn');
         const originalText = saveBtn.innerHTML;

@@ -694,25 +694,10 @@
                     </div>
                 </div>
 
-                <!-- Table Container -->
-                <div class="table-container">
-                    <div class="table-wrapper">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Employee No.</th>
-                                    <th>Fullname</th>
-                                    <th>Gender</th>
-                                    <th>Contact No.</th>
-                                    <th>Address</th>
-                                    <th>Services</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="employee-table-body">
-                                <!-- Employee data will be populated here -->
-                            </tbody>
-                        </table>
+                <!-- Employee Cards Container -->
+                <div class="employee-cards-container">
+                    <div class="employee-cards-grid" id="employee-cards-grid">
+                        <!-- Employee cards will be populated here -->
                     </div>
                     
                     <!-- Pagination -->
@@ -852,9 +837,8 @@
                 <h1>Add Employee</h1>
                 <button class="modal-close" id="close-employee-modal">&times;</button>
             </div>
-            <hr>
-            <br>
-            <form id="add-employee-form" novalidate autocomplete="off">
+            <div class="modal-body">
+                <form id="add-employee-form" novalidate autocomplete="off">
                 <div class="form-field">
                     <label><strong>Employee No</strong></label>
                     <input type="text" id="employee-no" placeholder="Employee No" required>
@@ -902,8 +886,8 @@
                 </div>
                 
                 <div class="form-field">
-                    <label><strong>Services</strong></label>
-                    <select id="services" multiple required>
+                    <label><strong>Services</strong> <span style="color: #666; font-size: 12px;">(Select multiple)</span></label>
+                    <select id="services" multiple required style="min-height: 120px; min-width: 400px; width: 100%;">
                         <option value="Hair and Makeup">Hair and Makeup</option>
                         <option value="Manicure Pedicure">Manicure Pedicure</option>
                         <option value="Hair Color">Hair Color</option>
@@ -911,6 +895,11 @@
                         <option value="Hair Treatment">Hair Treatment</option>
                         <option value="Lashes">Lashes</option>
                     </select>
+                    <small style="color: #666; font-style: italic;">💡 <strong>Multiple Selection:</strong> Simply click on services to select/deselect them. No need to hold Ctrl/Cmd!</small>
+                    <div style="margin-top: 8px;">
+                        <button type="button" id="select-all-services-main" style="background: #667eea; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-right: 8px; cursor: pointer;">Select All</button>
+                        <button type="button" id="clear-all-services-main" style="background: #f5f5f5; color: #666; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Clear All</button>
+                    </div>
                 </div>
                 
                 <div class="form-actions">
@@ -923,6 +912,7 @@
                     </button>
                 </div>
             </form>
+            </div>
         </div>
     </div>
 
@@ -1008,122 +998,250 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 2000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .modal-content {
-            background-color: whitesmoke;
-            border: 2px solid rgb(0, 0, 0);
-            padding: 20px;
-            box-shadow: 1px 1px;
-            width: 400px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: none;
+            padding: 0;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1);
+            width: 800px;
+            max-width: 95vw;
             max-height: 90vh;
             overflow-y: auto;
-            border-radius: 8px;
+            border-radius: 20px;
             position: relative;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(-30px) scale(0.95);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1);
+            }
         }
 
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            padding: 25px 30px 20px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px 20px 0 0;
+            position: relative;
+        }
+
+        .modal-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
         }
 
         .modal-header h1 {
             margin: 0;
-            font-size: 1.5rem;
-            color: #333;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .modal-close {
-            background: none;
+            background: rgba(255, 255, 255, 0.2);
             border: none;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             cursor: pointer;
-            color: #666;
-            padding: 0;
-            width: 30px;
-            height: 30px;
+            color: white;
+            padding: 8px;
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
         }
 
         .modal-close:hover {
-            color: #333;
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .modal-body {
+            padding: 30px;
         }
 
         .form-field {
-            margin-bottom: 15px;
+            margin-bottom: 25px;
+            position: relative;
         }
 
         .form-field label {
-            font-size: 17px;
+            font-size: 15px;
+            font-weight: 600;
             display: block;
-            margin-bottom: 5px;
-            color: #333;
+            margin-bottom: 8px;
+            color: #374151;
+            letter-spacing: 0.025em;
         }
 
         .form-field input,
         .form-field select {
             width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
             font-size: 14px;
             box-sizing: border-box;
+            background: #ffffff;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-field input:hover,
+        .form-field select:hover {
+            border-color: #d1d5db;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
         }
 
         .form-field input:focus,
         .form-field select:focus {
             outline: none;
-            border-color: #1976d2;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 2px 6px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px);
         }
 
         .form-field select[multiple] {
-            height: 100px;
+            height: 120px;
+            width: 100%;
+            min-width: 400px;
+            padding: 12px;
+            border-radius: 12px;
+            background: #ffffff;
+        }
+
+        .form-field select[multiple] option {
+            padding: 10px 12px;
+            margin: 3px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .form-field select[multiple] option:checked {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+        }
+
+        .form-field select[multiple] option:hover {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+            transform: translateX(2px);
+        }
+
+        /* Enhanced multiple selection styling */
+        .form-field select[multiple] {
+            border: 2px solid #e1e5e9;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-field select[multiple]:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Selection indicator */
+        #selected-count {
+            display: block;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        /* Make it more obvious that multiple selection is possible */
+        .form-field select[multiple]::before {
+            content: "Multiple selection available";
+            display: block;
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 5px;
         }
 
         .form-actions {
             display: flex;
-            gap: 10px;
-            margin-top: 20px;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 1px solid #e5e7eb;
         }
 
         .btn-cancel,
         .btn-submit {
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 4px;
+            border-radius: 12px;
             font-size: 14px;
-            font-weight: bold;
+            font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .btn-cancel {
-            background: #f5f5f5;
-            color: #333;
+            background: #f9fafb;
+            color: #6b7280;
+            border: 2px solid #e5e7eb;
         }
 
         .btn-cancel:hover {
-            background: #e0e0e0;
+            background: #f3f4f6;
+            border-color: #d1d5db;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
 
         .btn-submit {
-            background: #1976d2;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
 
         .btn-submit:hover {
-            background: #1565c0;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
         }
 
         .btn-icon {
@@ -1239,7 +1357,278 @@
                 flex-direction: column;
             }
         }
+
+        /* Employee Cards Styles */
+        .employee-cards-container {
+            padding: 20px;
+        }
+
+        .employee-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .employee-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .employee-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .employee-card.expanded {
+            grid-column: span 2;
+        }
+
+        .employee-card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .employee-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .employee-info {
+            flex: 1;
+        }
+
+        .employee-id {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .employee-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .employee-contact {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .employee-card-actions {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .employee-card:hover .employee-card-actions {
+            opacity: 1;
+        }
+
+        .card-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .card-edit-btn {
+            background: #1976d2;
+            color: white;
+        }
+
+        .card-edit-btn:hover {
+            background: #1565c0;
+        }
+
+        .card-delete-btn {
+            background: #d32f2f;
+            color: white;
+        }
+
+        .card-delete-btn:hover {
+            background: #b71c1c;
+        }
+
+        .employee-services {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .employee-card.expanded .employee-services {
+            max-height: 200px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .services-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .services-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .service-tag {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .no-services {
+            color: #999;
+            font-style: italic;
+            font-size: 14px;
+        }
+
+        .expand-indicator {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            color: #666;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+
+        .employee-card.expanded .expand-indicator {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .employee-cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .employee-card.expanded {
+                grid-column: span 1;
+            }
+            
+            .modal-content {
+                width: 95vw;
+                padding: 15px;
+            }
+        }
     </style>
+
+    <!-- Add Employee Modal -->
+    <div class="modal-overlay" id="add-employee-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1>Add New Employee</h1>
+                <button class="modal-close" id="close-employee-modal">&times;</button>
+            </div>
+            <form id="add-employee-form">
+                <div class="form-field">
+                    <label for="employee-id">Employee ID</label>
+                    <input type="text" id="employee-id" name="employeeId" required>
+                </div>
+                <div class="form-field">
+                    <label for="employee-name">Full Name</label>
+                    <input type="text" id="employee-name" name="name" required>
+                </div>
+                <div class="form-field">
+                    <label for="employee-gender">Gender</label>
+                    <select id="employee-gender" name="gender" required>
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label for="employee-phone">Phone Number</label>
+                    <input type="tel" id="employee-phone" name="phone" placeholder="+63-917-000-0000" required>
+                </div>
+                <div class="form-field">
+                    <label for="employee-address">Address</label>
+                    <input type="text" id="employee-address" name="address" required>
+                </div>
+                <div class="form-field">
+                    <label for="employee-specialties">Services/Specialties <span style="color: #666; font-size: 12px;">(Select multiple)</span></label>
+                                            <select id="employee-specialties" name="specialties" multiple required style="min-height: 120px; min-width: 400px; width: 100%;">
+                        <option value="manicure">Manicure</option>
+                        <option value="pedicure">Pedicure</option>
+                        <option value="manicure-gel">Manicure Gel</option>
+                        <option value="manipedi-gel">Manicure Pedicure Gel</option>
+                        <option value="footspa">Footspa</option>
+                        <option value="foot-massage">Foot Massage</option>
+                        <option value="hand-massage">Hand Massage</option>
+                        <option value="traditional-hamu">Traditional Hair and Makeup</option>
+                        <option value="glam-hamu">Glam Hair and Makeup</option>
+                        <option value="airbrush-hamu">Airbrush Hair and Makeup</option>
+                        <option value="classic-lashes">Classic Lashes</option>
+                        <option value="cat-eye-lashes">Cat Eye Lashes</option>
+                        <option value="wispy-lashes">Wispy Lashes</option>
+                        <option value="volume-lashes">Volume Lashes</option>
+                        <option value="lash-lift">Lash Lift</option>
+                        <option value="lash-removal">Lash Removal</option>
+                        <option value="brow-shave">Brow Shave</option>
+                        <option value="brow-tint">Brow Tint</option>
+                    </select>
+                                            <small style="color: #666; font-style: italic;">💡 <strong>Multiple Selection:</strong> Simply click on services to select/deselect them. No need to hold Ctrl/Cmd!</small>
+                        <div style="margin-top: 8px;">
+                            <button type="button" id="select-all-services" style="background: #667eea; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-right: 8px; cursor: pointer;">Select All</button>
+                            <button type="button" id="clear-all-services" style="background: #f5f5f5; color: #666; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer;">Clear All</button>
+                        </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-cancel" id="cancel-employee">Cancel</button>
+                    <button type="submit" class="btn-submit">
+                        <svg class="btn-icon" viewBox="0 0 24 24">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                        </svg>
+                        Add Employee
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Sign Out Confirmation Modal -->
     <div class="signout-modal" id="signout-modal">

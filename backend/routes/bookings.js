@@ -87,6 +87,17 @@ router.post('/', [
                 message: 'This time slot is already booked. Please select another time.'
             });
         }
+        
+        // Validate appointment date is not in the past
+        const appointmentDateTime = new Date(appointmentDate);
+        const now = new Date();
+        
+        if (appointmentDateTime < now) {
+            return res.status(400).json({
+                success: false,
+                message: 'Appointment date cannot be in the past.'
+            });
+        }
 
         // Calculate total amount
         const totalAmount = servicePricing[service] || 0;
@@ -296,7 +307,7 @@ router.delete('/:id', protect, async (req, res) => {
             });
         }
 
-        await booking.remove();
+        await Booking.findByIdAndDelete(req.params.id);
 
         res.json({
             success: true,

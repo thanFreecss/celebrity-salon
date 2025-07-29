@@ -155,6 +155,35 @@ router.put('/bookings/:id/status', protect, admin, async (req, res) => {
     }
 });
 
+// @route   DELETE /api/admin/bookings/:id
+// @desc    Delete a booking
+// @access  Private (Admin only)
+router.delete('/bookings/:id', protect, admin, async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id);
+        
+        if (!booking) {
+            return res.status(404).json({
+                success: false,
+                message: 'Booking not found'
+            });
+        }
+
+        await Booking.findByIdAndDelete(req.params.id);
+
+        res.json({
+            success: true,
+            message: 'Booking deleted successfully'
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+});
+
 // @route   GET /api/admin/reports
 // @desc    Get booking reports
 // @access  Private (Admin only)

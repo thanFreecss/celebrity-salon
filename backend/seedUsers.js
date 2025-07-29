@@ -63,8 +63,13 @@ const seedDatabase = async () => {
         await User.deleteMany({});
         console.log('Cleared existing users');
 
-        // Insert users
-        const createdUsers = await User.insertMany(users);
+        // Insert users one by one to ensure password hashing
+        const createdUsers = [];
+        for (const userData of users) {
+            const user = new User(userData);
+            await user.save();
+            createdUsers.push(user);
+        }
         console.log(`Successfully seeded ${createdUsers.length} users`);
 
         // Display the seeded users

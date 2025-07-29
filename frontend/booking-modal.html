@@ -92,6 +92,24 @@
             border-color: #667eea;
         }
         
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+            box-sizing: border-box;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+        
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
         .form-row {
             display: flex;
             gap: 15px;
@@ -286,6 +304,11 @@
                     </div>
                 </div>
                 
+                <div class="form-group">
+                    <label for="clientNotes">Special Requests / Notes</label>
+                    <textarea id="clientNotes" name="clientNotes" rows="4" placeholder="Any special requests, allergies, or additional information you'd like us to know..."></textarea>
+                </div>
+                
                 <button type="submit" class="submit-btn">RESERVE</button>
             </form>
         </div>
@@ -320,6 +343,62 @@
         // Set minimum date to today
         document.getElementById('appointmentDate').min = new Date().toISOString().split('T')[0];
 
+        // Function to update available employees based on selected service
+        async function updateAvailableEmployees(selectedService) {
+            const employeeSelect = document.getElementById('selectedEmployee');
+            
+            if (!selectedService) {
+                // Clear employee options if no service is selected
+                employeeSelect.innerHTML = '<option value="">Select an employee</option>';
+                return;
+            }
+            
+            try {
+                console.log('Fetching employees for service:', selectedService);
+                
+                // Call the backend API to get employees for the selected service
+                const apiUrl = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL + `/employees/service/${selectedService}` : `http://localhost:5000/api/employees/service/${selectedService}`;
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const employees = data.data;
+                    console.log(`Found ${employees.length} employees for service: ${selectedService}`);
+                    
+                    // Clear existing options
+                    employeeSelect.innerHTML = '<option value="">Select an employee</option>';
+                    
+                    if (employees.length === 0) {
+                        // No employees available for this service
+                        employeeSelect.innerHTML = '<option value="">No employees available for this service</option>';
+                        employeeSelect.disabled = true;
+                    } else {
+                        // Add employee options
+                        employees.forEach(employee => {
+                            const option = document.createElement('option');
+                            option.value = employee._id;
+                            option.textContent = `${employee.name} (${employee.position})`;
+                            employeeSelect.appendChild(option);
+                        });
+                        employeeSelect.disabled = false;
+                    }
+                } else {
+                    console.error('Failed to fetch employees:', data.message);
+                    employeeSelect.innerHTML = '<option value="">Error loading employees</option>';
+                    employeeSelect.disabled = true;
+                }
+            } catch (error) {
+                console.error('Error fetching employees:', error);
+                employeeSelect.innerHTML = '<option value="">Error loading employees</option>';
+                employeeSelect.disabled = true;
+            }
+        }
+
         // Service selection handler
         document.getElementById('service').addEventListener('change', function() {
             const serviceDetails = document.getElementById('serviceDetails');
@@ -331,8 +410,16 @@
                 document.getElementById('estimatedDuration').textContent = data.duration;
                 document.getElementById('serviceDescription').textContent = data.description;
                 serviceDetails.style.display = 'block';
+                
+                // Update available employees based on selected service
+                updateAvailableEmployees(selectedService);
             } else {
                 serviceDetails.style.display = 'none';
+                // Clear employee options if no service is selected
+                const employeeSelect = document.getElementById('selectedEmployee');
+                if (employeeSelect) {
+                    employeeSelect.innerHTML = '<option value="">Select an employee</option>';
+                }
             }
         });
 

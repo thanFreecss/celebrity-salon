@@ -70,7 +70,7 @@ async function fetchUsers() {
 
 async function fetchReservations() {
     try {
-        const response = await fetch(`${API_BASE_URL}/bookings`, {
+        const response = await fetch(`${API_BASE_URL}/admin/bookings`, {
             headers: {
                 'Authorization': `Bearer ${getAuthToken()}`
             }
@@ -192,33 +192,82 @@ async function deleteEmployee(id) {
 
 // Table Population Functions
 function populateEmployeeTable(data = employees) {
-    const tbody = document.getElementById('employee-table-body');
-    tbody.innerHTML = '';
+    const cardsGrid = document.getElementById('employee-cards-grid');
+    if (!cardsGrid) return;
+
+    cardsGrid.innerHTML = '';
 
     data.forEach(employee => {
-        const row = document.createElement('tr');
+        const card = document.createElement('div');
+        card.className = 'employee-card';
+        card.setAttribute('data-employee-id', employee._id);
+        
+        // Get initials for avatar
+        const initials = employee.name ? 
+            employee.name.split(' ').map(name => name[0]).join('').toUpperCase() : 'E';
         
         // Map specialties to readable format
-        const specialtiesText = employee.specialties && employee.specialties.length > 0 
-            ? employee.specialties.map(specialty => mapSpecialtyToReadable(specialty)).join(', ')
-            : 'No services assigned';
+        const services = employee.specialties && employee.specialties.length > 0 
+            ? employee.specialties.map(specialty => mapSpecialtyToReadable(specialty))
+            : [];
         
-        row.innerHTML = `
-            <td>${employee.employeeId || 'N/A'}</td>
-            <td>${employee.name || 'N/A'}</td>
-            <td>${employee.gender || 'N/A'}</td>
-            <td>${employee.phone || 'N/A'}</td>
-            <td>${employee.address || 'N/A'}</td>
-            <td>${specialtiesText}</td>
-            <td>
-                <div class="action-buttons">
-                    <button class="action-btn edit-btn" onclick="editEmployee('${employee._id}')">Edit</button>
-                    <button class="action-btn delete-btn" onclick="deleteEmployee('${employee._id}')">Delete</button>
+        card.innerHTML = `
+            <div class="employee-card-actions">
+                <button class="card-action-btn card-edit-btn" onclick="event.stopPropagation(); editEmployee('${employee._id}')" title="Edit">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    </svg>
+                </button>
+                <button class="card-action-btn card-delete-btn" onclick="event.stopPropagation(); deleteEmployee('${employee._id}')" title="Delete">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="employee-card-header">
+                <div class="employee-avatar">${initials}</div>
+                <div class="employee-info">
+                    <div class="employee-id">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                        ${employee.employeeId || 'N/A'}
+                    </div>
+                    <div class="employee-name">${employee.name || 'N/A'}</div>
+                    <div class="employee-contact">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02z"/>
+                        </svg>
+                        ${employee.phone || 'N/A'}
+                    </div>
                 </div>
-            </td>
+            </div>
+            <div class="employee-services">
+                <div class="services-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                    Services Offered
+                </div>
+                <div class="services-list">
+                    ${services.length > 0 ? 
+                        services.map(service => `<span class="service-tag">${service}</span>`).join('') : 
+                        '<span class="no-services">No services assigned</span>'
+                    }
+                </div>
+            </div>
+            <div class="expand-indicator">Click to view services</div>
         `;
-        tbody.appendChild(row);
+        
+        // Add click event to expand/collapse services
+        card.addEventListener('click', function() {
+            this.classList.toggle('expanded');
+        });
+        
+        cardsGrid.appendChild(card);
     });
+
+    updatePaginationInfo(data.length, 'employees');
 }
 
 function populateUserTable(data = users) {
@@ -241,8 +290,16 @@ function populateUserTable(data = users) {
             </td>
             <td>
                 <div class="action-buttons">
-                    <button class="action-btn edit-btn" onclick="editUser('${user._id}')">Edit</button>
-                    <button class="action-btn delete-btn" onclick="deleteUser('${user._id}')">Delete</button>
+                    <button class="action-btn edit-btn" onclick="editUser('${user._id}')" title="Edit">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                        </svg>
+                    </button>
+                    <button class="action-btn delete-btn" onclick="deleteUser('${user._id}')" title="Delete">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                        </svg>
+                    </button>
                 </div>
             </td>
         `;
@@ -276,8 +333,16 @@ function populateReservationTable(data = reservations) {
             </td>
             <td>
                 <div class="action-buttons">
-                    <button class="action-btn edit-btn" onclick="editReservation('${reservation._id}')">Edit</button>
-                    <button class="action-btn delete-btn" onclick="deleteReservation('${reservation._id}')">Delete</button>
+                    <button class="action-btn edit-btn" onclick="editReservation('${reservation._id}')" title="Edit">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                        </svg>
+                    </button>
+                    <button class="action-btn delete-btn" onclick="deleteReservation('${reservation._id}')" title="Delete">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                        </svg>
+                    </button>
                 </div>
             </td>
         `;
@@ -716,7 +781,7 @@ async function deleteReservation(id) {
 
     if (confirmed) {
         try {
-            const response = await fetch(`${API_BASE_URL}/bookings/${id}`, {
+            const response = await fetch(`${API_BASE_URL}/admin/bookings/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${getAuthToken()}`
@@ -927,6 +992,210 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             closeAdminSignoutModal();
+            window.closeAddEmployeeModal();
         }
     });
+
+    // Add Employee Modal Functionality
+    const addEmployeeBtn = document.getElementById('add-employee');
+    const addEmployeeModal = document.getElementById('add-employee-modal');
+    const closeEmployeeModal = document.getElementById('close-employee-modal');
+    const cancelEmployeeBtn = document.getElementById('cancel-employee');
+    const addEmployeeForm = document.getElementById('add-employee-form');
+
+    // Open modal
+    if (addEmployeeBtn) {
+        addEmployeeBtn.addEventListener('click', function() {
+            addEmployeeModal.style.display = 'flex';
+        });
+    }
+
+    // Close modal functions
+    window.closeAddEmployeeModal = function() {
+        addEmployeeModal.style.display = 'none';
+        addEmployeeForm.reset();
+    };
+
+    // Close modal event listeners
+    if (closeEmployeeModal) {
+        closeEmployeeModal.addEventListener('click', window.closeAddEmployeeModal);
+    }
+
+    if (cancelEmployeeBtn) {
+        cancelEmployeeBtn.addEventListener('click', window.closeAddEmployeeModal);
+    }
+
+    // Close modal when clicking outside
+    if (addEmployeeModal) {
+        addEmployeeModal.addEventListener('click', function(e) {
+            if (e.target === addEmployeeModal) {
+                window.closeAddEmployeeModal();
+            }
+        });
+    }
+
+    // Handle form submission
+    if (addEmployeeForm) {
+        // Add multiple selection enhancement for services
+        const specialtiesSelect = document.getElementById('employee-specialties');
+        if (specialtiesSelect) {
+            // Create a visual counter for selected items
+            const counterSpan = document.createElement('span');
+            counterSpan.id = 'selected-count';
+            counterSpan.style.cssText = 'color: #667eea; font-size: 12px; margin-left: 10px; font-weight: 500;';
+            specialtiesSelect.parentNode.insertBefore(counterSpan, specialtiesSelect.nextSibling);
+            
+            // Update counter function
+            function updateSelectedCount() {
+                const selectedCount = specialtiesSelect.selectedOptions.length;
+                counterSpan.textContent = selectedCount > 0 ? `${selectedCount} service(s) selected` : '';
+            }
+            
+            // Add event listener to update counter
+            specialtiesSelect.addEventListener('change', updateSelectedCount);
+            
+            // Enable multiple selection without Ctrl/Cmd key
+            specialtiesSelect.addEventListener('mousedown', function(e) {
+                const option = e.target;
+                if (option.tagName === 'OPTION') {
+                    e.preventDefault();
+                    
+                    // Toggle selection state
+                    if (option.selected) {
+                        option.selected = false;
+                    } else {
+                        option.selected = true;
+                    }
+                    
+                    // Trigger change event to update counter
+                    this.dispatchEvent(new Event('change'));
+                }
+            });
+            
+            // Initial counter update
+            updateSelectedCount();
+            
+            // Add Select All functionality
+            const selectAllBtn = document.getElementById('select-all-services');
+            const clearAllBtn = document.getElementById('clear-all-services');
+            
+            if (selectAllBtn) {
+                selectAllBtn.addEventListener('click', function() {
+                    for (let option of specialtiesSelect.options) {
+                        option.selected = true;
+                    }
+                    updateSelectedCount();
+                });
+            }
+            
+            if (clearAllBtn) {
+                clearAllBtn.addEventListener('click', function() {
+                    for (let option of specialtiesSelect.options) {
+                        option.selected = false;
+                    }
+                    updateSelectedCount();
+                });
+            }
+        }
+
+        // Add multiple selection enhancement for the main services select
+        const mainServicesSelect = document.getElementById('services');
+        if (mainServicesSelect) {
+            // Create a visual counter for selected items
+            const counterSpan = document.createElement('span');
+            counterSpan.id = 'selected-count-main';
+            counterSpan.style.cssText = 'color: #667eea; font-size: 12px; margin-left: 10px; font-weight: 500;';
+            mainServicesSelect.parentNode.insertBefore(counterSpan, mainServicesSelect.nextSibling);
+            
+            // Update counter function
+            function updateMainSelectedCount() {
+                const selectedCount = mainServicesSelect.selectedOptions.length;
+                counterSpan.textContent = selectedCount > 0 ? `${selectedCount} service(s) selected` : '';
+            }
+            
+            // Add event listener to update counter
+            mainServicesSelect.addEventListener('change', updateMainSelectedCount);
+            
+            // Enable multiple selection without Ctrl/Cmd key
+            mainServicesSelect.addEventListener('mousedown', function(e) {
+                const option = e.target;
+                if (option.tagName === 'OPTION') {
+                    e.preventDefault();
+                    
+                    // Toggle selection state
+                    if (option.selected) {
+                        option.selected = false;
+                    } else {
+                        option.selected = true;
+                    }
+                    
+                    // Trigger change event to update counter
+                    this.dispatchEvent(new Event('change'));
+                }
+            });
+            
+            // Initial counter update
+            updateMainSelectedCount();
+            
+            // Add Select All functionality for main services
+            const selectAllMainBtn = document.getElementById('select-all-services-main');
+            const clearAllMainBtn = document.getElementById('clear-all-services-main');
+            
+            if (selectAllMainBtn) {
+                selectAllMainBtn.addEventListener('click', function() {
+                    for (let option of mainServicesSelect.options) {
+                        option.selected = true;
+                    }
+                    updateMainSelectedCount();
+                });
+            }
+            
+            if (clearAllMainBtn) {
+                clearAllMainBtn.addEventListener('click', function() {
+                    for (let option of mainServicesSelect.options) {
+                        option.selected = false;
+                    }
+                    updateMainSelectedCount();
+                });
+            }
+        }
+
+        addEmployeeForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const employeeData = {
+                employeeId: formData.get('employeeId'),
+                name: formData.get('name'),
+                gender: formData.get('gender'),
+                phone: formData.get('phone'),
+                address: formData.get('address'),
+                specialties: Array.from(formData.getAll('specialties'))
+            };
+
+            try {
+                const submitBtn = this.querySelector('.btn-submit');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Adding...';
+                submitBtn.disabled = true;
+
+                const success = await createEmployee(employeeData);
+                
+                if (success) {
+                    showNotification('Employee added successfully!', 'success');
+                    window.closeAddEmployeeModal();
+                    // Refresh the employee list
+                    await fetchEmployees();
+                    populateEmployeeTable(employees);
+                }
+            } catch (error) {
+                console.error('Error adding employee:', error);
+                showNotification('Failed to add employee. Please try again.', 'error');
+            } finally {
+                const submitBtn = this.querySelector('.btn-submit');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+    }
 }); 

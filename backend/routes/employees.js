@@ -30,9 +30,15 @@ router.get('/service/:serviceId', async (req, res) => {
     try {
         const { serviceId } = req.params;
         
+        // Find employees who either:
+        // 1. Have the specific service in their specialties, OR
+        // 2. Have no specialties assigned (empty array) - these can work any service
         const employees = await Employee.find({
             isActive: true,
-            specialties: serviceId
+            $or: [
+                { specialties: serviceId },
+                { specialties: { $size: 0 } }  // Empty specialties array
+            ]
         });
 
         res.json({
@@ -163,7 +169,7 @@ router.delete('/:id', protect, admin, async (req, res) => {
             });
         }
 
-        await employee.remove();
+        await Employee.findByIdAndDelete(req.params.id);
 
         res.json({
             success: true,

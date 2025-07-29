@@ -135,7 +135,7 @@ router.delete('/:id', protect, admin, async (req, res) => {
             });
         }
 
-        await service.remove();
+        await Service.findByIdAndDelete(req.params.id);
 
         res.json({
             success: true,
