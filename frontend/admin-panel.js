@@ -38,15 +38,22 @@ async function fetchEmployees() {
 
 async function fetchUsers() {
     try {
+        const token = getAuthToken();
+        console.log('Debug - fetchUsers - Using token:', token);
+        
         console.log('Fetching users from:', `${API_BASE_URL}/users`);
         const response = await fetch(`${API_BASE_URL}/users`, {
             headers: {
-                'Authorization': `Bearer ${getAuthToken()}`
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
         });
         console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
         
         if (!response.ok) {
+            const errorText = await response.text();
+            console.log('Debug - Error response body:', errorText);
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
@@ -438,31 +445,53 @@ function updatePaginationInfo(count, type) {
 }
 
 function getAuthToken() {
-    return localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken');
+    const adminToken = localStorage.getItem('adminToken');
+    const sessionToken = sessionStorage.getItem('adminToken');
+    const userToken = localStorage.getItem('userToken');
+    
+    console.log('Debug - adminToken from localStorage:', adminToken);
+    console.log('Debug - adminToken from sessionStorage:', sessionToken);
+    console.log('Debug - userToken from localStorage:', userToken);
+    
+    const token = adminToken || sessionToken;
+    console.log('Debug - Final token being used:', token);
+    
+    return token;
 }
 
 // Check if user is authenticated as admin
 function checkAdminAuth() {
     const token = getAuthToken();
     const adminData = localStorage.getItem('adminData');
+    const userData = localStorage.getItem('userData');
+    
+    console.log('Debug - checkAdminAuth - token:', token);
+    console.log('Debug - checkAdminAuth - adminData:', adminData);
+    console.log('Debug - checkAdminAuth - userData:', userData);
     
     if (!token || !adminData) {
+        console.log('Debug - No token or adminData found, redirecting to admin login');
         // Redirect to admin login
         window.location.href = 'admin-login.html';
         return false;
     }
     
     try {
-        const userData = JSON.parse(adminData);
-        if (userData.role !== 'admin') {
+        const parsedAdminData = JSON.parse(adminData);
+        console.log('Debug - Parsed adminData:', parsedAdminData);
+        
+        if (parsedAdminData.role !== 'admin') {
+            console.log('Debug - User is not admin, redirecting');
             // Not an admin, redirect to admin login
             localStorage.removeItem('adminToken');
             localStorage.removeItem('adminData');
             window.location.href = 'admin-login.html';
             return false;
         }
+        console.log('Debug - Admin authentication successful');
         return true;
     } catch (error) {
+        console.log('Debug - Error parsing adminData:', error);
         // Invalid data, redirect to admin login
         localStorage.removeItem('adminToken');
         localStorage.removeItem('adminData');
@@ -1265,20 +1294,31 @@ document.addEventListener('DOMContentLoaded', function() {
         addEmployeeForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const formData = new FormData(this);
+            // Get form field values
+            const employeeId = document.getElementById('employee-no').value;
+            const firstName = document.getElementById('first-name').value;
+            const lastName = document.getElementById('last-name').value;
+            const phone = document.getElementById('contact-no').value;
+            
+            // Get selected services
+            const servicesSelect = document.getElementById('services');
+            const selectedServices = Array.from(servicesSelect.selectedOptions).map(option => option.value);
+            
+            // Combine name
+            const fullName = `${firstName} ${lastName}`.trim();
+            
             const employeeData = {
-                employeeId: formData.get('employeeId'),
-                name: formData.get('name'),
-                gender: formData.get('gender'),
-                phone: formData.get('phone'),
-                address: formData.get('address'),
-                specialties: Array.from(formData.getAll('specialties'))
+                employeeId: employeeId,
+                name: fullName,
+                phone: phone,
+                specialties: selectedServices
             };
 
+            const submitBtn = this.querySelector('.btn-submit');
+            const originalText = submitBtn.innerHTML;
+
             try {
-                const submitBtn = this.querySelector('.btn-submit');
-                const originalText = submitBtn.innerHTML;
-                submitBtn.innerHTML = '<svg class="btn-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg> Adding...';
+                submitBtn.innerHTML = 'Adding...';
                 submitBtn.disabled = true;
 
                 const success = await createEmployee(employeeData);
@@ -1294,7 +1334,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error adding employee:', error);
                 showNotification('Failed to add employee. Please try again.', 'error');
             } finally {
-                const submitBtn = this.querySelector('.btn-submit');
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
             }

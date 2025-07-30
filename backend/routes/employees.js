@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect, admin } = require('../middleware/auth');
 const Employee = require('../models/Employee');
+const mongoose = require('mongoose'); // Added for database connection test
 
 // @route   GET /api/employees
 // @desc    Get all employees
@@ -82,23 +83,74 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+// Test route to check database connection
+router.get('/test', async (req, res) => {
+    try {
+        console.log('Testing database connection...');
+        
+        // Test if we can connect to the database
+        const dbState = mongoose.connection.readyState;
+        console.log('Database connection state:', dbState);
+        
+        // Test if we can create a simple document
+        const testEmployee = new Employee({
+            name: 'Test Employee',
+            employeeId: 'TEST001',
+            email: 'test@test.com',
+            phone: '09123456789',
+            position: 'Manicurist',
+            specialties: ['manicure']
+        });
+        
+        console.log('Test employee object created:', testEmployee);
+        
+        res.json({
+            success: true,
+            message: 'Database connection test successful',
+            dbState: dbState,
+            testEmployee: testEmployee
+        });
+    } catch (error) {
+        console.error('Database test error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Database test failed',
+            error: error.message
+        });
+    }
+});
+
 // @route   POST /api/employees
 // @desc    Create new employee (admin only)
 // @access  Private
 router.post('/', protect, admin, async (req, res) => {
     try {
-        const { name, employeeId, email, phone, specialties, position, workingHours, daysOff } = req.body;
+        console.log('Creating employee with data:', req.body);
+        
+        const { name, employeeId, email, phone, specialties } = req.body;
 
-        const employee = await Employee.create({
-            name,
-            employeeId,
-            email,
-            phone,
-            specialties,
-            position,
-            workingHours,
-            daysOff
-        });
+        // Simple validation
+        if (!name || !employeeId || !phone) {
+            return res.status(400).json({
+                success: false,
+                message: 'Name, Employee ID, and Phone are required'
+            });
+        }
+
+        const employeeData = {
+            name: name,
+            employeeId: employeeId,
+            email: email || `${employeeId}@celebritystyles.com`,
+            phone: phone,
+            position: 'Employee',
+            specialties: specialties || []
+        };
+
+        console.log('Final employee data:', employeeData);
+
+        const employee = await Employee.create(employeeData);
+
+        console.log('Employee created successfully:', employee);
 
         res.status(201).json({
             success: true,
@@ -106,10 +158,11 @@ router.post('/', protect, admin, async (req, res) => {
             data: employee
         });
     } catch (error) {
-        console.error(error);
+        console.error('Error creating employee:', error);
         res.status(500).json({
             success: false,
-            message: 'Server error'
+            message: 'Server error',
+            error: error.message
         });
     }
 });

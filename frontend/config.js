@@ -2,12 +2,20 @@
 const config = {
     // API base URL - will be automatically determined based on environment
     get API_BASE_URL() {
-        // In production, use the deployed backend URL
-        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-            return 'https://celebrity-salon-backend.onrender.com/api';
+        // Check if we're on localhost or 127.0.0.1
+        const isLocalhost = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1' ||
+                           window.location.hostname.includes('localhost');
+        
+        console.log('Current hostname:', window.location.hostname);
+        console.log('Is localhost:', isLocalhost);
+        
+        // In development (localhost), use localhost backend
+        if (isLocalhost) {
+            return 'http://localhost:5000/api';
         }
-        // In development, use localhost
-        return 'http://localhost:5000/api';
+        // In production, use the deployed backend URL
+        return 'https://celebrity-styles-backend.onrender.com/api';
     },
     
     // Frontend base URL

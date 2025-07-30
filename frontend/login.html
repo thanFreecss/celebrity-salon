@@ -244,6 +244,8 @@
         // Get API base URL from config or use default
         const API_BASE_URL = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL : 'http://localhost:5000/api';
         
+        console.log('API_BASE_URL:', API_BASE_URL); // Debug log
+        
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -259,6 +261,8 @@
                 const originalText = submitBtn.textContent;
                 submitBtn.textContent = 'Logging In...';
                 submitBtn.disabled = true;
+                
+                console.log('Making request to:', `${API_BASE_URL}/auth/login`); // Debug log
                 
                 const response = await fetch(`${API_BASE_URL}/auth/login`, {
                     method: 'POST',
