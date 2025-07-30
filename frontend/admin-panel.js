@@ -890,7 +890,13 @@ async function confirmReservation(id) {
             const data = await response.json();
             
             if (data.success) {
-                showNotification(`Reservation for "${reservation.fullName}" confirmed successfully`, 'success');
+                let message = `Reservation for "${reservation.fullName}" confirmed successfully`;
+                if (data.emailSent) {
+                    message += ' - Confirmation email sent to customer';
+                } else {
+                    message += ' - Email notification failed to send';
+                }
+                showNotification(message, 'success');
                 await fetchReservations(); // Refresh the table
                 return true;
             } else {
@@ -935,7 +941,13 @@ async function cancelReservation(id) {
             const data = await response.json();
             
             if (data.success) {
-                showNotification(`Reservation for "${reservation.fullName}" cancelled successfully`, 'success');
+                let message = `Reservation for "${reservation.fullName}" cancelled successfully`;
+                if (data.emailSent) {
+                    message += ' - Cancellation email sent to customer';
+                } else {
+                    message += ' - Email notification failed to send';
+                }
+                showNotification(message, 'success');
                 await fetchReservations(); // Refresh the table
                 return true;
             } else {

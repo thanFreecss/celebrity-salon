@@ -6,6 +6,7 @@ const User = require('../models/User');
 const Service = require('../models/Service');
 const Employee = require('../models/Employee');
 const mongoose = require('mongoose');
+const { sendBookingConfirmation, sendBookingCancellation } = require('../utils/emailService');
 
 // Check database connection
 const checkDBConnection = () => {
@@ -177,13 +178,65 @@ router.put('/bookings/:id/status', protect, admin, async (req, res) => {
             });
         }
 
+        const previousStatus = booking.status;
         booking.status = status;
         await booking.save();
+
+        // Send email notifications based on status change
+        let emailResult = null;
+        
+        if (status === 'confirmed' && previousStatus !== 'confirmed') {
+            // Get stylist name if available
+            let stylistName = null;
+            if (booking.selectedEmployee) {
+                try {
+                    const employee = await Employee.findById(booking.selectedEmployee);
+                    stylistName = employee ? employee.name : null;
+                } catch (error) {
+                    console.error('Error fetching employee for email:', error);
+                }
+            }
+
+            const emailData = {
+                fullName: booking.fullName,
+                email: booking.email,
+                service: booking.service,
+                appointmentDate: booking.appointmentDate,
+                selectedTime: booking.selectedTime,
+                totalAmount: booking.totalAmount,
+                stylistName: stylistName
+            };
+
+            emailResult = await sendBookingConfirmation(emailData);
+            
+            if (emailResult.success) {
+                console.log('Confirmation email sent successfully to:', booking.email);
+            } else {
+                console.error('Failed to send confirmation email:', emailResult.error);
+            }
+        } else if (status === 'cancelled' && previousStatus !== 'cancelled') {
+            const emailData = {
+                fullName: booking.fullName,
+                email: booking.email,
+                service: booking.service,
+                appointmentDate: booking.appointmentDate,
+                selectedTime: booking.selectedTime
+            };
+
+            emailResult = await sendBookingCancellation(emailData);
+            
+            if (emailResult.success) {
+                console.log('Cancellation email sent successfully to:', booking.email);
+            } else {
+                console.error('Failed to send cancellation email:', emailResult.error);
+            }
+        }
 
         res.json({
             success: true,
             message: 'Booking status updated successfully',
-            data: booking
+            data: booking,
+            emailSent: emailResult ? emailResult.success : false
         });
     } catch (error) {
         console.error(error);

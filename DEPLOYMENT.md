@@ -61,7 +61,11 @@ PORT=10000
 MONGODB_URI=mongodb+srv://your_username:your_password@your_cluster.mongodb.net/celebrity_styles?retryWrites=true&w=majority
 JWT_SECRET=your_secure_jwt_secret_key_here
 JWT_EXPIRE=30d
+EMAIL_USER=your_gmail_address@gmail.com
+EMAIL_PASSWORD=your_gmail_app_password
 ```
+
+**Note**: For email notifications to work, you need to set up Gmail app passwords. See `EMAIL_SETUP.md` for detailed instructions.
 
 ### 2.4 Health Check
 - **Health Check Path**: `/api/health`
