@@ -20,7 +20,7 @@ connectDB().catch(err => {
 // Middleware
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
-        ? ['https://celebrity-salon-frontend.onrender.com', 'https://celebrity-salon-backend.onrender.com']
+        ? ['https://celebrity-styles.onrender.com', 'https://celebrity-styles-backend.onrender.com']
         : ['http://localhost:5000', 'http://localhost:3000', 'http://127.0.0.1:5000', 'http://127.0.0.1:3000'],
     credentials: true
 }));
