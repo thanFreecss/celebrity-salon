@@ -9,8 +9,7 @@
     "server": "cd backend && npm start",
     "client": "cd frontend && npm start",
     "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
-    "build": "echo 'No build step required for this project'",
-    "postinstall": "npm run install-all"
+    "build": "echo 'No build step required for this project'"
   },
   "keywords": [
     "salon",
