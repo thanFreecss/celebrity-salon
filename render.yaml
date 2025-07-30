@@ -3,13 +3,19 @@ services:
     name: celebrity-styles-backend
     env: node
     plan: free
-    buildCommand: npm install
+    buildCommand: npm install && npm run init-db
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
+      - key: MONGODB_URI
+        value: mongodb+srv://vince:vincePassword@cluster0.kf7cwhd.mongodb.net/celebrity_styles?retryWrites=true&w=majority&appName=Cluster0
+      - key: JWT_SECRET
+        value: celebrity_styles_jwt_secret_key_2024_secure_authentication_token
+      - key: JWT_EXPIRE
+        value: 30d
     healthCheckPath: /api/health
 
   - type: web

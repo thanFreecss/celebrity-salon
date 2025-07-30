@@ -14,6 +14,7 @@ const app = express();
 // Connect to database (but don't block server startup)
 connectDB().catch(err => {
     console.log('Database connection failed, but server will continue');
+    console.error('Connection error details:', err);
 });
 
 // Middleware
@@ -83,11 +84,22 @@ app.get('*', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-    console.error(err.stack);
+    console.error('Error occurred:', err);
+    console.error('Error stack:', err.stack);
+    
+    // Check if it's a database connection error
+    if (err.name === 'MongoNetworkError' || err.name === 'MongoServerSelectionError') {
+        return res.status(503).json({ 
+            success: false, 
+            message: 'Database connection error. Please try again later.',
+            error: process.env.NODE_ENV === 'development' ? err.message : 'Database unavailable'
+        });
+    }
+    
     res.status(500).json({ 
         success: false, 
         message: 'Something went wrong!',
-        error: process.env.NODE_ENV === 'development' ? err.message : {}
+        error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
     });
 });
 

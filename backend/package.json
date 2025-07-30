@@ -10,6 +10,7 @@
     "seed-users": "node seedUsers.js",
     "reset-admin": "node resetAdminPassword.js",
     "debug-users": "node debugUsers.js",
+    "init-db": "node initDatabase.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
