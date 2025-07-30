@@ -863,4 +863,76 @@ document.addEventListener('DOMContentLoaded', function() {
         originalOpenProfileModal();
         setTimeout(setupPhoneValidation, 100); // Small delay to ensure modal is rendered
     };
+
+    // Footer Quick Links Navigation
+    const footerHome = document.getElementById('footer-home');
+    const footerServices = document.getElementById('footer-services');
+    const footerPromos = document.getElementById('footer-promos');
+    const footerContact = document.getElementById('footer-contact');
+    const footerSeasonal = document.getElementById('footer-seasonal');
+
+    if (footerHome) {
+        footerHome.addEventListener('click', function(e) {
+            e.preventDefault();
+            promoSection.style.display = 'none';
+            main.style.display = '';
+            gallery.style.display = '';
+            servicesSection.style.display = 'none';
+            contactSection.style.display = 'none';
+            seasonalSection.style.display = 'none';
+            setHomeBg(true);
+        });
+    }
+
+    if (footerPromos) {
+        footerPromos.addEventListener('click', function(e) {
+            e.preventDefault();
+            promoSection.style.display = '';
+            main.style.display = 'none';
+            gallery.style.display = 'none';
+            servicesSection.style.display = 'none';
+            contactSection.style.display = 'none';
+            seasonalSection.style.display = 'none';
+            setHomeBg(false);
+        });
+    }
+
+    if (footerServices) {
+        footerServices.addEventListener('click', function(e) {
+            e.preventDefault();
+            promoSection.style.display = 'none';
+            main.style.display = 'none';
+            gallery.style.display = 'none';
+            servicesSection.style.display = '';
+            contactSection.style.display = 'none';
+            seasonalSection.style.display = 'none';
+            setHomeBg(false);
+        });
+    }
+
+    if (footerContact) {
+        footerContact.addEventListener('click', function(e) {
+            e.preventDefault();
+            promoSection.style.display = 'none';
+            main.style.display = 'none';
+            gallery.style.display = 'none';
+            servicesSection.style.display = 'none';
+            seasonalSection.style.display = 'none';
+            contactSection.style.display = '';
+            setHomeBg(false);
+        });
+    }
+
+    if (footerSeasonal) {
+        footerSeasonal.addEventListener('click', function(e) {
+            e.preventDefault();
+            promoSection.style.display = 'none';
+            main.style.display = 'none';
+            gallery.style.display = 'none';
+            servicesSection.style.display = 'none';
+            contactSection.style.display = 'none';
+            seasonalSection.style.display = '';
+            setHomeBg(false);
+        });
+    }
 });
