@@ -116,11 +116,35 @@ router.get('/bookings', protect, admin, async (req, res) => {
             .limit(parseInt(limit))
             .populate('user', 'name email');
 
+        // Get employee information for each booking
+        const bookingsWithEmployeeInfo = await Promise.all(bookings.map(async (booking) => {
+            const bookingObj = booking.toObject();
+            
+            // If selectedEmployee is an ObjectId, populate it
+            if (booking.selectedEmployee && mongoose.Types.ObjectId.isValid(booking.selectedEmployee)) {
+                try {
+                    const employee = await Employee.findById(booking.selectedEmployee);
+                    bookingObj.stylistName = employee ? employee.name : 'Unknown Stylist';
+                    bookingObj.stylistId = booking.selectedEmployee;
+                } catch (error) {
+                    console.error('Error fetching employee:', error);
+                    bookingObj.stylistName = 'Unknown Stylist';
+                    bookingObj.stylistId = booking.selectedEmployee;
+                }
+            } else {
+                // If selectedEmployee is a string (name), use it directly
+                bookingObj.stylistName = booking.selectedEmployee || 'No Stylist Assigned';
+                bookingObj.stylistId = booking.selectedEmployee;
+            }
+            
+            return bookingObj;
+        }));
+
         const total = await Booking.countDocuments(filter);
 
         res.json({
             success: true,
-            data: bookings,
+            data: bookingsWithEmployeeInfo,
             pagination: {
                 currentPage: parseInt(page),
                 totalPages: Math.ceil(total / limit),

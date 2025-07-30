@@ -327,7 +327,8 @@ function populateReservationTable(data = reservations) {
             <td>${reservation.mobileNumber || 'N/A'}</td>
             <td>${reservation.email || 'N/A'}</td>
             <td>${mapSpecialtyToReadable(reservation.service) || 'N/A'}</td>
-            <td>${reservation.selectedEmployee || 'N/A'}</td>
+            <td>${reservation.stylistName || reservation.selectedEmployee || 'N/A'}</td>
+            <td>${reservation.clientNotes ? `<span class="notes-badge" onclick="showNotesModal('${reservation.clientNotes.replace(/'/g, "\\'")}')" title="Click to view full notes">${reservation.clientNotes.length > 30 ? reservation.clientNotes.substring(0, 30) + '...' : reservation.clientNotes}</span>` : 'No notes'}</td>
             <td><span class="price-badge">₱${reservation.totalAmount || 'N/A'}</span></td>
             <td>${getServiceDuration(reservation.service) || 'N/A'}</td>
             <td>${formatDate(reservation.appointmentDate) || 'N/A'}</td>
@@ -1164,6 +1165,20 @@ function confirmAdminSignOut() {
     window.location.href = 'admin-login.html';
 }
 
+// Notes Modal Functions
+function showNotesModal(notes) {
+    const modal = document.getElementById('notes-modal');
+    const notesContent = document.getElementById('notes-content');
+    
+    notesContent.textContent = notes;
+    modal.style.display = 'flex';
+}
+
+function closeNotesModal() {
+    const modal = document.getElementById('notes-modal');
+    modal.style.display = 'none';
+}
+
 // Add event listeners for admin sign out modal
 document.addEventListener('DOMContentLoaded', function() {
     // Sign out modal background click
@@ -1181,8 +1196,27 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Escape') {
             closeAdminSignoutModal();
             window.closeAddEmployeeModal();
+            closeNotesModal();
         }
     });
+
+    // Notes Modal Functionality
+    const notesModal = document.getElementById('notes-modal');
+    const closeNotesModalBtn = document.getElementById('close-notes-modal');
+
+    // Close notes modal event listeners
+    if (closeNotesModalBtn) {
+        closeNotesModalBtn.addEventListener('click', closeNotesModal);
+    }
+
+    // Close notes modal when clicking outside
+    if (notesModal) {
+        notesModal.addEventListener('click', function(e) {
+            if (e.target === notesModal) {
+                closeNotesModal();
+            }
+        });
+    }
 
     // Add Employee Modal Functionality
     const addEmployeeBtn = document.getElementById('add-employee');
