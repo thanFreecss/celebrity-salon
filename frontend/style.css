@@ -392,7 +392,7 @@ footer {
     visibility: hidden;
     transform: translateY(-10px);
     transition: all 0.3s ease;
-    z-index: 1000;
+    z-index: 1002;
     margin-top: 8px;
 }
 
