@@ -157,7 +157,7 @@ async function updateEmployee(id, employeeData) {
 }
 
 async function deleteEmployee(id) {
-    const employee = employees.find(e => e._id === id);
+    const employee = employees.find(emp => emp._id === id);
     if (!employee) {
         showNotification('Employee not found', 'error');
         return;
@@ -739,16 +739,78 @@ function showReservations() {
 // Action Functions
 async function editEmployee(id) {
     const employee = employees.find(emp => emp._id === id);
-    if (employee) {
-        // TODO: Implement edit modal
-        alert(`Edit employee: ${employee.name}`);
+    if (!employee) {
+        showNotification('Employee not found', 'error');
+        return;
     }
+
+    // Populate the edit modal
+    document.getElementById('edit-employee-name').value = employee.name;
+    document.getElementById('edit-employee-id').value = employee.employeeId;
+    
+    // Clear previous selections
+    const editServicesSelect = document.getElementById('edit-services');
+    for (let option of editServicesSelect.options) {
+        option.selected = false;
+    }
+    
+    // Select current services
+    if (employee.specialties && employee.specialties.length > 0) {
+        employee.specialties.forEach(specialty => {
+            const option = Array.from(editServicesSelect.options).find(opt => opt.value === specialty);
+            if (option) {
+                option.selected = true;
+            }
+        });
+    }
+    
+    // Store the employee ID for the form submission
+    document.getElementById('edit-employee-form').setAttribute('data-employee-id', id);
+    
+    // Show the modal
+    document.getElementById('edit-employee-modal').style.display = 'flex';
 }
 
 async function deleteEmployee(id) {
     const employee = employees.find(emp => emp._id === id);
-    if (employee && confirm(`Are you sure you want to delete employee ${employee.name}?`)) {
-        await deleteEmployee(id);
+    if (!employee) {
+        showNotification('Employee not found', 'error');
+        return;
+    }
+
+    // Show confirmation dialog
+    const confirmed = await showConfirmDialog(
+        `Delete Employee`,
+        `Are you sure you want to delete employee "${employee.name}"?`,
+        'This action cannot be undone and will permanently remove the employee from the system.',
+        'Delete',
+        '#f44336'
+    );
+
+    if (confirmed) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/employees/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${getAuthToken()}`
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showNotification(`Employee "${employee.name}" deleted successfully`, 'success');
+                await fetchEmployees(); // Refresh the table
+                return true;
+            } else {
+                showNotification(data.message || 'Failed to delete employee', 'error');
+                return false;
+            }
+        } catch (error) {
+            console.error('Error deleting employee:', error);
+            showNotification('Error deleting employee: ' + error.message, 'error');
+            return false;
+        }
     }
 }
 
@@ -1289,6 +1351,115 @@ document.addEventListener('DOMContentLoaded', function() {
                     updateMainSelectedCount();
                 });
             }
+        }
+
+        // Edit Employee Modal Event Listeners
+        const editEmployeeModal = document.getElementById('edit-employee-modal');
+        const closeEditEmployeeModal = document.getElementById('close-edit-employee-modal');
+        const cancelEditEmployee = document.getElementById('cancel-edit-employee');
+        const editEmployeeForm = document.getElementById('edit-employee-form');
+        const editServicesSelect = document.getElementById('edit-services');
+        const selectAllEditServicesBtn = document.getElementById('select-all-edit-services');
+        const clearAllEditServicesBtn = document.getElementById('clear-all-edit-services');
+
+        // Close edit modal
+        if (closeEditEmployeeModal) {
+            closeEditEmployeeModal.addEventListener('click', function() {
+                editEmployeeModal.style.display = 'none';
+            });
+        }
+
+        if (cancelEditEmployee) {
+            cancelEditEmployee.addEventListener('click', function() {
+                editEmployeeModal.style.display = 'none';
+            });
+        }
+
+        // Close modal when clicking outside
+        if (editEmployeeModal) {
+            editEmployeeModal.addEventListener('click', function(e) {
+                if (e.target === editEmployeeModal) {
+                    editEmployeeModal.style.display = 'none';
+                }
+            });
+        }
+
+        // Edit services multiple selection
+        if (editServicesSelect) {
+            editServicesSelect.addEventListener('mousedown', function(e) {
+                const option = e.target;
+                if (option.tagName === 'OPTION') {
+                    e.preventDefault();
+                    
+                    // Toggle selection state
+                    if (option.selected) {
+                        option.selected = false;
+                    } else {
+                        option.selected = true;
+                    }
+                }
+            });
+        }
+
+        // Select All functionality for edit services
+        if (selectAllEditServicesBtn) {
+            selectAllEditServicesBtn.addEventListener('click', function() {
+                for (let option of editServicesSelect.options) {
+                    option.selected = true;
+                }
+            });
+        }
+        
+        if (clearAllEditServicesBtn) {
+            clearAllEditServicesBtn.addEventListener('click', function() {
+                for (let option of editServicesSelect.options) {
+                    option.selected = false;
+                }
+            });
+        }
+
+        // Edit employee form submission
+        if (editEmployeeForm) {
+            editEmployeeForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const employeeId = this.getAttribute('data-employee-id');
+                if (!employeeId) {
+                    showNotification('Employee ID not found', 'error');
+                    return;
+                }
+
+                // Get selected services
+                const selectedServices = Array.from(editServicesSelect.selectedOptions).map(option => option.value);
+                
+                const employeeData = {
+                    specialties: selectedServices
+                };
+
+                const submitBtn = this.querySelector('.btn-submit');
+                const originalText = submitBtn.innerHTML;
+
+                try {
+                    submitBtn.innerHTML = 'Updating...';
+                    submitBtn.disabled = true;
+
+                    const success = await updateEmployee(employeeId, employeeData);
+                    
+                    if (success) {
+                        showNotification('Employee services updated successfully!', 'success');
+                        editEmployeeModal.style.display = 'none';
+                        // Refresh the employee list
+                        await fetchEmployees();
+                        populateEmployeeTable(employees);
+                    }
+                } catch (error) {
+                    console.error('Error updating employee:', error);
+                    showNotification('Failed to update employee services. Please try again.', 'error');
+                } finally {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            });
         }
 
         addEmployeeForm.addEventListener('submit', async function(e) {
