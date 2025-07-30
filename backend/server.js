@@ -10,8 +10,10 @@ dotenv.config({ path: './config.env' });
 // Initialize express app
 const app = express();
 
-// Connect to database
-connectDB();
+// Connect to database (but don't block server startup)
+connectDB().catch(err => {
+    console.log('Database connection failed, but server will continue');
+});
 
 // Middleware
 app.use(cors({
