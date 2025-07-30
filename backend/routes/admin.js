@@ -5,12 +5,27 @@ const Booking = require('../models/Booking');
 const User = require('../models/User');
 const Service = require('../models/Service');
 const Employee = require('../models/Employee');
+const mongoose = require('mongoose');
+
+// Check database connection
+const checkDBConnection = () => {
+    return mongoose.connection.readyState === 1;
+};
 
 // @route   GET /api/admin/dashboard
 // @desc    Get admin dashboard stats
 // @access  Private (Admin only)
 router.get('/dashboard', protect, admin, async (req, res) => {
     try {
+        // Check database connection first
+        if (!checkDBConnection()) {
+            console.log('Database not connected for admin dashboard request');
+            return res.status(503).json({
+                success: false,
+                message: 'Database connection not available'
+            });
+        }
+
         // Get total bookings
         const totalBookings = await Booking.countDocuments();
         
@@ -68,7 +83,7 @@ router.get('/dashboard', protect, admin, async (req, res) => {
             }
         });
     } catch (error) {
-        console.error(error);
+        console.error('Admin dashboard error:', error);
         res.status(500).json({
             success: false,
             message: 'Server error'

@@ -4,6 +4,12 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
+const mongoose = require('mongoose');
+
+// Check database connection
+const checkDBConnection = () => {
+    return mongoose.connection.readyState === 1;
+};
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -22,6 +28,15 @@ router.post('/register', [
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
 ], async (req, res) => {
     try {
+        // Check database connection first
+        if (!checkDBConnection()) {
+            console.log('Database not connected for register request');
+            return res.status(503).json({
+                success: false,
+                message: 'Database connection not available'
+            });
+        }
+
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({
@@ -63,7 +78,7 @@ router.post('/register', [
             });
         }
     } catch (error) {
-        console.error(error);
+        console.error('Register error:', error);
         res.status(500).json({
             success: false,
             message: 'Server error'
@@ -79,6 +94,15 @@ router.post('/login', [
     body('password').exists().withMessage('Password is required')
 ], async (req, res) => {
     try {
+        // Check database connection first
+        if (!checkDBConnection()) {
+            console.log('Database not connected for login request');
+            return res.status(503).json({
+                success: false,
+                message: 'Database connection not available'
+            });
+        }
+
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
             return res.status(400).json({
@@ -140,6 +164,15 @@ router.post('/login', [
 // @access  Private
 router.get('/me', protect, async (req, res) => {
     try {
+        // Check database connection first
+        if (!checkDBConnection()) {
+            console.log('Database not connected for me request');
+            return res.status(503).json({
+                success: false,
+                message: 'Database connection not available'
+            });
+        }
+
         const user = await User.findById(req.user.id);
         res.json({
             success: true,

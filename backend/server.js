@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/database');
 const path = require('path');
+const mongoose = require('mongoose'); // Added for database status
 
 // Load environment variables
 dotenv.config({ path: './config.env' });
@@ -43,7 +44,27 @@ app.get('/api/health', (req, res) => {
         success: true, 
         message: 'Server is healthy!',
         timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV
+        environment: process.env.NODE_ENV,
+        database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+    });
+});
+
+// Database status route
+app.get('/api/db-status', (req, res) => {
+    const dbStatus = mongoose.connection.readyState;
+    const statusText = {
+        0: 'Disconnected',
+        1: 'Connected',
+        2: 'Connecting',
+        3: 'Disconnecting'
+    };
+    
+    res.json({
+        success: true,
+        database: statusText[dbStatus] || 'Unknown',
+        readyState: dbStatus,
+        host: mongoose.connection.host || 'Not connected',
+        name: mongoose.connection.name || 'Not connected'
     });
 });
 
