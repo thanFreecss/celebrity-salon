@@ -615,28 +615,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // User dropdown functionality
+    // User menu popup functionality
     const userAvatar = document.getElementById('user-avatar');
-    const dropdownMenu = document.getElementById('dropdown-menu');
+    const userMenuModal = document.getElementById('user-menu-modal');
+    const userMenuContainer = document.querySelector('.user-menu-container');
 
-    if (userAvatar && dropdownMenu) {
-        // Toggle dropdown when clicking the avatar
+    if (userAvatar && userMenuModal) {
+        // Open popup when clicking the avatar
         userAvatar.addEventListener('click', function(e) {
             e.stopPropagation();
-            dropdownMenu.classList.toggle('show');
+            userMenuModal.classList.add('show');
         });
 
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!userAvatar.contains(e.target) && !dropdownMenu.contains(e.target)) {
-                dropdownMenu.classList.remove('show');
+        // Close popup when clicking on the modal background (outside the menu container)
+        userMenuModal.addEventListener('click', function(e) {
+            // If clicking on the modal background (not the container or its children)
+            if (e.target === userMenuModal) {
+                userMenuModal.classList.remove('show');
             }
         });
 
-        // Close dropdown when clicking on dropdown items
-        dropdownMenu.addEventListener('click', function(e) {
-            if (e.target.classList.contains('dropdown-item')) {
-                dropdownMenu.classList.remove('show');
+        // Close popup when clicking on menu items
+        userMenuModal.addEventListener('click', function(e) {
+            if (e.target.classList.contains('user-menu-item')) {
+                userMenuModal.classList.remove('show');
             }
         });
     }
