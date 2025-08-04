@@ -242,6 +242,107 @@ const emailTemplates = {
             </body>
             </html>
         `
+    }),
+
+    passwordReset: (resetData) => ({
+        subject: '🔐 Password Reset Request - Celebrity Styles Hair Salon',
+        html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Password Reset</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        line-height: 1.6;
+                        color: #333;
+                        max-width: 600px;
+                        margin: 0 auto;
+                        padding: 20px;
+                    }
+                    .header {
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        padding: 30px;
+                        text-align: center;
+                        border-radius: 10px 10px 0 0;
+                    }
+                    .content {
+                        background: #f9f9f9;
+                        padding: 30px;
+                        border-radius: 0 0 10px 10px;
+                    }
+                    .reset-button {
+                        display: inline-block;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        padding: 15px 30px;
+                        text-decoration: none;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        margin: 20px 0;
+                    }
+                    .warning {
+                        background: #fff3cd;
+                        border: 1px solid #ffeaa7;
+                        color: #856404;
+                        padding: 15px;
+                        border-radius: 5px;
+                        margin: 20px 0;
+                    }
+                    .footer {
+                        text-align: center;
+                        margin-top: 30px;
+                        padding-top: 20px;
+                        border-top: 1px solid #ddd;
+                        color: #666;
+                        font-size: 14px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>🔐 Password Reset Request</h1>
+                    <p>Celebrity Styles Hair Salon</p>
+                </div>
+                
+                <div class="content">
+                    <p>Dear <strong>${resetData.name}</strong>,</p>
+                    
+                    <p>We received a request to reset your password for your Celebrity Styles Hair Salon account.</p>
+                    
+                    <p>Click the button below to reset your password:</p>
+                    
+                    <div style="text-align: center;">
+                        <a href="${resetData.resetUrl}" class="reset-button">Reset Password</a>
+                    </div>
+                    
+                    <div class="warning">
+                        <strong>⚠️ Important:</strong>
+                        <ul>
+                            <li>This link will expire in 10 minutes</li>
+                            <li>If you didn't request this password reset, please ignore this email</li>
+                            <li>For security reasons, this link can only be used once</li>
+                        </ul>
+                    </div>
+                    
+                    <p>If the button above doesn't work, you can copy and paste this link into your browser:</p>
+                    <p style="word-break: break-all; color: #667eea;">${resetData.resetUrl}</p>
+                    
+                    <p>If you have any questions or need assistance, please contact our support team.</p>
+                    
+                    <p>Best regards,<br>
+                    <strong>The Celebrity Styles Team</strong></p>
+                </div>
+                
+                <div class="footer">
+                    <p>This is an automated email. Please do not reply to this message.</p>
+                    <p>If you didn't request this password reset, please contact us immediately.</p>
+                </div>
+            </body>
+            </html>
+        `
     })
 };
 
@@ -276,8 +377,14 @@ const sendBookingCancellation = async (bookingData) => {
     return await sendEmail(bookingData.email, 'bookingCancellation', bookingData);
 };
 
+// Send password reset email
+const sendPasswordReset = async (resetData) => {
+    return await sendEmail(resetData.email, 'passwordReset', resetData);
+};
+
 module.exports = {
     sendEmail,
     sendBookingConfirmation,
-    sendBookingCancellation
+    sendBookingCancellation,
+    sendPasswordReset
 }; 

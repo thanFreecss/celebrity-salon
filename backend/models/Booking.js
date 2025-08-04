@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
+const Counter = require('./Counter');
 
 const bookingSchema = new mongoose.Schema({
+    bookingId: {
+        type: Number,
+        unique: true,
+        required: true
+    },
     user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -76,8 +82,30 @@ const bookingSchema = new mongoose.Schema({
     timestamps: true
 });
 
+// Pre-save middleware to generate booking ID
+bookingSchema.pre('save', async function(next) {
+    if (this.isNew && !this.bookingId) {
+        try {
+            // Get the next sequence number
+            const counter = await Counter.findOneAndUpdate(
+                { name: 'bookingId' },
+                { $inc: { sequence: 1 } },
+                { new: true, upsert: true }
+            );
+            
+            this.bookingId = counter.sequence;
+            next();
+        } catch (error) {
+            next(error);
+        }
+    } else {
+        next();
+    }
+});
+
 // Index for efficient queries
 bookingSchema.index({ appointmentDate: 1, selectedTime: 1, status: 1 });
 bookingSchema.index({ user: 1, createdAt: -1 });
+bookingSchema.index({ bookingId: 1 }); // Index for booking ID queries
 
 module.exports = mongoose.model('Booking', bookingSchema); 

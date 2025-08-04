@@ -322,7 +322,10 @@ function populateReservationTable(data = reservations) {
         
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${reservation._id ? reservation._id.slice(-8).toUpperCase() : 'N/A'}</td>
+            <td>
+                <input type="checkbox" class="row-checkbox" data-reservation-id="${reservation._id}" data-booking-id="${reservation.bookingId || 'N/A'}">
+            </td>
+            <td>${reservation.bookingId || (reservation._id ? reservation._id.slice(-8).toUpperCase() : 'N/A')}</td>
             <td>${reservation.fullName || 'N/A'}</td>
             <td>${reservation.mobileNumber || 'N/A'}</td>
             <td>${reservation.email || 'N/A'}</td>
@@ -364,6 +367,9 @@ function populateReservationTable(data = reservations) {
         `;
         tbody.appendChild(row);
     });
+    
+    // Setup checkbox event listeners after populating the table
+    setupReservationCheckboxes();
 }
 
 // Utility Functions
@@ -1551,4 +1557,132 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-}); 
+});
+
+// Bulk Delete Functions for Reservations
+function setupReservationCheckboxes() {
+    const selectAllCheckbox = document.getElementById('select-all-reservations');
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+    const bulkActions = document.getElementById('bulk-actions-reservations');
+    const selectedCount = document.getElementById('selected-count');
+    const bulkDeleteBtn = document.getElementById('bulk-delete-reservations');
+
+    // Select all checkbox functionality
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            rowCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateBulkActionsVisibility();
+        });
+    }
+
+    // Individual row checkbox functionality
+    rowCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectAllCheckbox();
+            updateBulkActionsVisibility();
+        });
+    });
+
+    // Bulk delete button functionality
+    if (bulkDeleteBtn) {
+        bulkDeleteBtn.addEventListener('click', handleBulkDelete);
+    }
+
+    function updateSelectAllCheckbox() {
+        const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+        const totalBoxes = rowCheckboxes.length;
+        
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = checkedBoxes.length === totalBoxes;
+            selectAllCheckbox.indeterminate = checkedBoxes.length > 0 && checkedBoxes.length < totalBoxes;
+        }
+    }
+
+    function updateBulkActionsVisibility() {
+        const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+        
+        if (checkedBoxes.length > 0) {
+            bulkActions.style.display = 'flex';
+            selectedCount.textContent = checkedBoxes.length;
+            bulkDeleteBtn.disabled = false;
+        } else {
+            bulkActions.style.display = 'none';
+            bulkDeleteBtn.disabled = true;
+        }
+    }
+
+    // Initialize visibility
+    updateBulkActionsVisibility();
+}
+
+async function handleBulkDelete() {
+    const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+    
+    if (checkedBoxes.length === 0) {
+        showNotification('No reservations selected for deletion', 'error');
+        return;
+    }
+
+    const selectedIds = Array.from(checkedBoxes).map(checkbox => checkbox.getAttribute('data-reservation-id'));
+    const selectedBookingIds = Array.from(checkedBoxes).map(checkbox => checkbox.getAttribute('data-booking-id'));
+
+    const result = await showConfirmDialog(
+        'Delete Selected Reservations',
+        `Are you sure you want to delete ${selectedIds.length} reservation(s)?`,
+        `This will permanently delete the following booking(s): ${selectedBookingIds.join(', ')}. This action cannot be undone.`,
+        'Delete',
+        '#dc3545'
+    );
+
+    if (result) {
+        try {
+            const deletePromises = selectedIds.map(id => deleteReservation(id));
+            await Promise.all(deletePromises);
+            
+            showNotification(`Successfully deleted ${selectedIds.length} reservation(s)`, 'success');
+            
+            // Refresh the reservations list
+            await fetchReservations();
+            
+            // Reset select all checkbox
+            const selectAllCheckbox = document.getElementById('select-all-reservations');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            }
+            
+        } catch (error) {
+            console.error('Error during bulk delete:', error);
+            showNotification('Some reservations could not be deleted. Please try again.', 'error');
+        }
+    }
+}
+
+async function deleteReservation(id) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/bookings/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+            return true;
+        } else {
+            throw new Error(data.message || 'Failed to delete reservation');
+        }
+    } catch (error) {
+        console.error('Error deleting reservation:', error);
+        throw error;
+    }
+}

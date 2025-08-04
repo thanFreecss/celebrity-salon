@@ -245,7 +245,7 @@ class UserProfile {
         bookings.forEach(booking => {
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${booking._id ? booking._id.slice(-8).toUpperCase() : 'N/A'}</td>
+                <td>${booking.bookingId || (booking._id ? booking._id.slice(-8).toUpperCase() : 'N/A')}</td>
                 <td>${booking.service || 'N/A'}</td>
                 <td>${this.formatDate(booking.appointmentDate)}</td>
                 <td>${booking.selectedTime || 'N/A'}</td>

@@ -116,7 +116,7 @@ router.post('/', [
             clientNotes,
             totalAmount
         });
-        console.log('Booking created with ID:', booking._id);
+        console.log('Booking created with ID:', booking._id, 'Booking ID:', booking.bookingId);
 
         res.status(201).json({
             success: true,
@@ -360,6 +360,43 @@ router.put('/:id/cancel', protect, async (req, res) => {
         res.json({
             success: true,
             message: 'Booking cancelled successfully',
+            data: booking
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+});
+
+// @route   GET /api/bookings/id/:bookingId
+// @desc    Get booking by custom booking ID
+// @access  Public
+router.get('/id/:bookingId', async (req, res) => {
+    try {
+        const bookingId = parseInt(req.params.bookingId);
+        
+        if (isNaN(bookingId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid booking ID format'
+            });
+        }
+
+        const booking = await Booking.findOne({ bookingId })
+            .populate('user', 'name email');
+
+        if (!booking) {
+            return res.status(404).json({
+                success: false,
+                message: 'Booking not found'
+            });
+        }
+
+        res.json({
+            success: true,
             data: booking
         });
     } catch (error) {

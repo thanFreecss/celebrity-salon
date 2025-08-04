@@ -669,6 +669,89 @@
         [data-theme="dark"] .data-table tbody tr:hover {
             background: #3d3d3d;
         }
+
+        /* Bulk Actions Styles */
+        .select-all-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #1976d2;
+        }
+
+        .row-checkbox {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #1976d2;
+        }
+
+        .bulk-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+            margin-top: -1px;
+        }
+
+        .bulk-actions-info {
+            font-size: 0.875rem;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .bulk-delete-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .bulk-delete-btn:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+        }
+
+        .bulk-delete-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+        }
+
+        .bulk-delete-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        [data-theme="dark"] .bulk-actions {
+            background: #2d2d2d;
+            border-color: #444;
+        }
+
+        [data-theme="dark"] .bulk-actions-info {
+            color: #ccc;
+        }
+
+        [data-theme="dark"] .bulk-delete-btn {
+            background: #dc3545;
+        }
+
+        [data-theme="dark"] .bulk-delete-btn:hover {
+            background: #c82333;
+        }
     </style>
 </head>
 <body>
@@ -856,6 +939,9 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
+                                    <th>
+                                        <input type="checkbox" id="select-all-reservations" class="select-all-checkbox">
+                                    </th>
                                     <th>Booking ID</th>
                                     <th>Customer Name</th>
                                     <th>Phone</th>
@@ -875,6 +961,19 @@
                                 <!-- Reservation data will be populated here -->
                             </tbody>
                         </table>
+                    </div>
+                    
+                    <!-- Bulk Actions -->
+                    <div class="bulk-actions" id="bulk-actions-reservations" style="display: none;">
+                        <div class="bulk-actions-info">
+                            <span id="selected-count">0</span> reservations selected
+                        </div>
+                        <button class="bulk-delete-btn" id="bulk-delete-reservations" title="Delete Selected Reservations">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                            </svg>
+                            Delete Selected
+                        </button>
                     </div>
                     
                     <!-- Pagination -->
