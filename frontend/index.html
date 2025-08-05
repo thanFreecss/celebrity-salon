@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Celebrity Styles Hair Salon</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="icon" type="image/x-icon" href="images/celebpic.ico">
+    <link rel="icon" type="image/x-icon" href="images/icon2.png">
 </head>
 <body>
     <header>
         <div class="logo">
-            <img src="images/celebpic.ico" alt="Celebrity Styles Logo">
+            <img src="images/icon2.png" alt="Celebrity Styles Logo">
         </div>
         <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Toggle mobile menu">
             <span></span>
@@ -27,8 +27,12 @@
             </ul>
         </nav>
         <div class="user-actions" id="user-actions">
-            <a href="login.html" class="login-btn" id="login-btn">Log In</a>
-            <a href="signup.html" class="signup-btn" id="signup-btn">Sign Up</a>
+            <a href="login.html" class="button" id="login-btn">
+                <span class="text">Log In</span>
+            </a>
+            <a href="signup.html" class="button" id="signup-btn">
+                <span class="text">Sign Up</span>
+            </a>
         </div>
         <div class="user-profile" id="user-profile" style="display: none;">
             <div class="user-dropdown">
@@ -310,16 +314,14 @@
     </section>
     <section class="gallery-section">
         <div class="gallery-header">
-            <span>FOLLOW US ON TIKTOK</span>
-            <a href="#" class="tiktok-link">@celebritystyleshairsalon</a>
+            <h2>Client Before & After Gallery</h2>
+            <p>See the amazing transformations our clients have experienced</p>
         </div>
-        <div class="gallery-scroll">
-            <img src="images/hair1.jpg" alt="Hair 1">
-            <img src="images/hair2.jpg" alt="Hair 2">
-            <img src="images/hair3.jpg" alt="Hair 3">
-            <img src="images/hair4.jpg" alt="Hair 4">
-            <img src="images/hair5.jpg" alt="Hair 5">
-            <img src="images/hair6.jpg" alt="Hair 6">
+        <div class="before-after-gallery" id="before-after-gallery">
+            <!-- Before & After images will be loaded dynamically from the backend -->
+            <div class="loading-placeholder">
+                <p>Loading amazing transformations...</p>
+            </div>
         </div>
     </section>
     <section class="contact-section" id="contact-section" style="display:none;">

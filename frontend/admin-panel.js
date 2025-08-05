@@ -5,6 +5,19 @@ const API_BASE_URL = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL : 'http:
 let employees = [];
 let users = [];
 let reservations = [];
+let beforeAfterImages = [];
+
+// Helper function to handle expired tokens
+function handleExpiredToken() {
+    console.log('Token expired, redirecting to admin login');
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminData');
+    sessionStorage.removeItem('adminToken');
+    showNotification('Session expired. Please log in again.', 'warning');
+    setTimeout(() => {
+        window.location.href = 'admin-login.html';
+    }, 2000);
+}
 
 // API Functions
 async function fetchEmployees() {
@@ -51,6 +64,11 @@ async function fetchUsers() {
         console.log('Response status:', response.status);
         console.log('Response headers:', response.headers);
         
+        if (response.status === 401) {
+            handleExpiredToken();
+            return;
+        }
+        
         if (!response.ok) {
             const errorText = await response.text();
             console.log('Debug - Error response body:', errorText);
@@ -82,6 +100,12 @@ async function fetchReservations() {
                 'Authorization': `Bearer ${getAuthToken()}`
             }
         });
+        
+        if (response.status === 401) {
+            handleExpiredToken();
+            return;
+        }
+        
         const data = await response.json();
         
         if (data.success) {
@@ -95,7 +119,151 @@ async function fetchReservations() {
         }
     } catch (error) {
         console.error('Error fetching reservations:', error);
-        showNotification('Error connecting to server: ' + error.message, 'error');
+        if (error.message.includes('jwt expired') || error.message.includes('401')) {
+            handleExpiredToken();
+        } else {
+            showNotification('Error connecting to server: ' + error.message, 'error');
+        }
+    }
+}
+
+async function fetchBeforeAfterImages() {
+    try {
+        console.log('🔍 Fetching before & after images from:', `${API_BASE_URL}/before-after/admin`);
+        console.log('🔍 Auth token:', getAuthToken() ? 'Present' : 'Missing');
+        
+        const response = await fetch(`${API_BASE_URL}/before-after/admin`, {
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`
+            }
+        });
+        
+        console.log('🔍 Response status:', response.status);
+        console.log('🔍 Response headers:', response.headers);
+        
+        if (response.status === 401) {
+            handleExpiredToken();
+            return;
+        }
+        
+        // Check if response is JSON
+        const contentType = response.headers.get('content-type');
+        console.log('🔍 Content-Type:', contentType);
+        
+        if (!contentType || !contentType.includes('application/json')) {
+            const textResponse = await response.text();
+            console.error('🔍 Non-JSON response:', textResponse.substring(0, 200));
+            throw new Error('Server returned non-JSON response');
+        }
+        
+        const data = await response.json();
+        
+        if (Array.isArray(data)) {
+            beforeAfterImages = data;
+            populateBeforeAfterGrid(beforeAfterImages);
+            updatePaginationInfo(beforeAfterImages.length, 'before-after');
+            showNotification(`Successfully loaded ${beforeAfterImages.length} before & after images`, 'success');
+        } else {
+            console.error('Failed to fetch before & after images:', data.message);
+            showNotification('Failed to fetch before & after images', 'error');
+        }
+    } catch (error) {
+        console.error('Error fetching before & after images:', error);
+        if (error.message.includes('jwt expired') || error.message.includes('401')) {
+            handleExpiredToken();
+        } else {
+            showNotification('Error connecting to server: ' + error.message, 'error');
+        }
+    }
+}
+
+async function uploadBeforeAfterImages(formData) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/before-after/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`
+            },
+            body: formData
+        });
+        
+        if (response.status === 401) {
+            handleExpiredToken();
+            return false;
+        }
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showNotification('Before & After images uploaded successfully!', 'success');
+            await fetchBeforeAfterImages(); // Refresh the list
+            return true;
+        } else {
+            showNotification('Upload failed: ' + (data.message || 'Unknown error'), 'error');
+            return false;
+        }
+    } catch (error) {
+        console.error('Upload error:', error);
+        if (error.message.includes('jwt expired') || error.message.includes('401')) {
+            handleExpiredToken();
+        } else {
+            showNotification('Error uploading images: ' + error.message, 'error');
+        }
+        return false;
+    }
+}
+
+async function updateBeforeAfterImage(id, updateData) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/before-after/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updateData)
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showNotification('Before & After image updated successfully!', 'success');
+            await fetchBeforeAfterImages(); // Refresh the list
+            return true;
+        } else {
+            showNotification('Update failed: ' + (data.message || 'Unknown error'), 'error');
+            return false;
+        }
+    } catch (error) {
+        console.error('Update error:', error);
+        showNotification('Error updating image: ' + error.message, 'error');
+        return false;
+    }
+}
+
+async function deleteBeforeAfterImage(id) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/before-after/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showNotification('Before & After image deleted successfully!', 'success');
+            await fetchBeforeAfterImages(); // Refresh the list
+            return true;
+        } else {
+            showNotification('Delete failed: ' + (data.message || 'Unknown error'), 'error');
+            return false;
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+        showNotification('Error deleting image: ' + error.message, 'error');
+        return false;
     }
 }
 
@@ -370,6 +538,71 @@ function populateReservationTable(data = reservations) {
     
     // Setup checkbox event listeners after populating the table
     setupReservationCheckboxes();
+}
+
+function populateBeforeAfterGrid(data = beforeAfterImages) {
+    const grid = document.getElementById('before-after-grid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    if (data.length === 0) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                </svg>
+                <h3>No Before & After Images</h3>
+                <p>Start showcasing your amazing transformations by uploading some before and after images.</p>
+            </div>
+        `;
+        return;
+    }
+
+    data.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'before-after-card';
+        card.innerHTML = `
+            <div class="before-after-images">
+                <div class="before-image-container">
+                    <img src="${API_BASE_URL}/before-after/images/${item.beforeImage}" alt="Before" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5CZWZvcmU8L3RleHQ+Cjwvc3ZnPgo='">
+                    <div class="image-label before-label">Before</div>
+                </div>
+                <div class="after-image-container">
+                    <img src="${API_BASE_URL}/before-after/images/${item.afterImage}" alt="After" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5BZnRlcjwvdGV4dD4KPC9zdmc+Cg=='">
+                    <div class="image-label after-label">After</div>
+                </div>
+            </div>
+            <div class="before-after-info">
+                <div class="before-after-description">
+                    ${item.description || 'No description provided'}
+                </div>
+                <div class="before-after-meta">
+                    <span>Uploaded: ${formatDate(item.createdAt)}</span>
+                    <span>By: ${item.uploadedBy ? item.uploadedBy.name : 'Unknown'}</span>
+                </div>
+            </div>
+            <div class="before-after-actions">
+                <button class="before-after-action-btn before-after-toggle-btn" onclick="toggleBeforeAfterStatus('${item._id}', ${item.isActive})" title="${item.isActive ? 'Deactivate' : 'Activate'}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="${item.isActive ? 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8z' : 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8z'}"/>
+                    </svg>
+                </button>
+                <button class="before-after-action-btn before-after-edit-btn" onclick="editBeforeAfterImage('${item._id}')" title="Edit">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    </svg>
+                </button>
+                <button class="before-after-action-btn before-after-delete-btn" onclick="deleteBeforeAfterImage('${item._id}')" title="Delete">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="status-indicator ${item.isActive ? 'status-active' : 'status-inactive'}"></div>
+        `;
+        grid.appendChild(card);
+    });
 }
 
 // Utility Functions
@@ -697,6 +930,7 @@ function showEmployees() {
     document.getElementById('employees-section').style.display = 'block';
     document.getElementById('users-section').style.display = 'none';
     document.getElementById('reservation-section').style.display = 'none';
+    document.getElementById('before-after-section').style.display = 'none';
     
     // Update navigation active state
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
@@ -712,6 +946,7 @@ function showUsers() {
     document.getElementById('employees-section').style.display = 'none';
     document.getElementById('users-section').style.display = 'block';
     document.getElementById('reservation-section').style.display = 'none';
+    document.getElementById('before-after-section').style.display = 'none';
     
     // Update navigation active state
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
@@ -727,6 +962,7 @@ function showReservations() {
     document.getElementById('employees-section').style.display = 'none';
     document.getElementById('users-section').style.display = 'none';
     document.getElementById('reservation-section').style.display = 'block';
+    document.getElementById('before-after-section').style.display = 'none';
     
     // Update navigation active state
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
@@ -735,6 +971,22 @@ function showReservations() {
     // Fetch reservations if not already loaded
     if (reservations.length === 0) {
         fetchReservations();
+    }
+}
+
+function showBeforeAfter() {
+    document.getElementById('employees-section').style.display = 'none';
+    document.getElementById('users-section').style.display = 'none';
+    document.getElementById('reservation-section').style.display = 'none';
+    document.getElementById('before-after-section').style.display = 'block';
+    
+    // Update navigation active state
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    document.querySelector('a[href="#before-after"]').classList.add('active');
+    
+    // Fetch before & after images if not already loaded
+    if (beforeAfterImages.length === 0) {
+        fetchBeforeAfterImages();
     }
 }
 
@@ -1016,16 +1268,32 @@ async function completeReservation(id) {
 // Test server connection
 async function testServerConnection() {
     try {
-        console.log('Testing server connection...');
+        console.log('🔍 Testing server connection to:', `${API_BASE_URL}/test`);
         const response = await fetch(`${API_BASE_URL}/test`);
+        console.log('🔍 Test response status:', response.status);
         const data = await response.json();
-        console.log('Server test response:', data);
+        console.log('🔍 Server test response:', data);
         showNotification('Server connection successful!', 'success');
         return true;
     } catch (error) {
-        console.error('Server connection test failed:', error);
+        console.error('🔍 Server connection test failed:', error);
         showNotification('Server connection failed: ' + error.message, 'error');
         return false;
+    }
+}
+
+// Test before-after route specifically
+async function testBeforeAfterRoute() {
+    try {
+        console.log('🔍 Testing before-after route:', `${API_BASE_URL}/before-after/test`);
+        const response = await fetch(`${API_BASE_URL}/before-after/test`);
+        console.log('🔍 Before-after test response status:', response.status);
+        const data = await response.json();
+        console.log('🔍 Before-after route test:', data);
+        showNotification('Before-after route test successful', 'success');
+    } catch (error) {
+        console.error('🔍 Before-after route test failed:', error);
+        showNotification('Before-after route test failed', 'error');
     }
 }
 
@@ -1056,6 +1324,11 @@ function initializeAdminPanel() {
             document.querySelector('a[href="#reservation"]').addEventListener('click', function(e) {
                 e.preventDefault();
                 showReservations();
+            });
+
+            document.querySelector('a[href="#before-after"]').addEventListener('click', function(e) {
+                e.preventDefault();
+                showBeforeAfter();
             });
 
             // Setup other event listeners
@@ -1112,6 +1385,43 @@ function setupEventListeners() {
         document.getElementById('signout-button').addEventListener('click', function() {
             showAdminSignoutModal();
         });
+
+        // Before & After upload functionality
+        document.getElementById('add-before-after').addEventListener('click', function() {
+            document.getElementById('upload-before-after-modal').style.display = 'flex';
+        });
+
+        document.getElementById('close-upload-before-after-modal').addEventListener('click', function() {
+            document.getElementById('upload-before-after-modal').style.display = 'none';
+        });
+
+        document.getElementById('cancel-upload-before-after').addEventListener('click', function() {
+            document.getElementById('upload-before-after-modal').style.display = 'none';
+        });
+
+        document.getElementById('upload-before-after-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const beforeImage = document.getElementById('before-image').files[0];
+            const afterImage = document.getElementById('after-image').files[0];
+            const description = document.getElementById('description').value;
+
+            if (!beforeImage || !afterImage) {
+                showNotification('Please select both before and after images', 'error');
+                return;
+            }
+
+            formData.append('beforeImage', beforeImage);
+            formData.append('afterImage', afterImage);
+            formData.append('description', description);
+
+            const success = await uploadBeforeAfterImages(formData);
+            if (success) {
+                document.getElementById('upload-before-after-modal').style.display = 'none';
+                document.getElementById('upload-before-after-form').reset();
+            }
+        });
 }
 
 // Add CSS animations for notifications
@@ -1143,6 +1453,10 @@ document.head.appendChild(style);
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔍 Admin panel DOM loaded');
+    console.log('🔍 API_BASE_URL:', API_BASE_URL);
+    console.log('🔍 APP_CONFIG:', window.APP_CONFIG);
+    
     // Load saved theme
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
@@ -1684,5 +1998,62 @@ async function deleteReservation(id) {
     } catch (error) {
         console.error('Error deleting reservation:', error);
         throw error;
+    }
+}
+
+// Before & After Action Functions
+async function toggleBeforeAfterStatus(id, currentStatus) {
+    try {
+        const newStatus = !currentStatus;
+        const success = await updateBeforeAfterImage(id, { isActive: newStatus });
+        if (success) {
+            showNotification(`Image ${newStatus ? 'activated' : 'deactivated'} successfully!`, 'success');
+        }
+    } catch (error) {
+        console.error('Toggle status error:', error);
+        showNotification('Error updating image status: ' + error.message, 'error');
+    }
+}
+
+async function editBeforeAfterImage(id) {
+    try {
+        const item = beforeAfterImages.find(img => img._id === id);
+        if (!item) {
+            showNotification('Image not found', 'error');
+            return;
+        }
+
+        const newDescription = prompt('Enter new description:', item.description || '');
+        if (newDescription === null) return; // User cancelled
+
+        const success = await updateBeforeAfterImage(id, { description: newDescription });
+        if (success) {
+            showNotification('Image description updated successfully!', 'success');
+        }
+    } catch (error) {
+        console.error('Edit error:', error);
+        showNotification('Error updating image: ' + error.message, 'error');
+    }
+}
+
+async function deleteBeforeAfterImage(id) {
+    try {
+        const confirmed = await showConfirmDialog(
+            'Delete Before & After Image',
+            'Are you sure you want to delete this before & after image pair?',
+            'This action cannot be undone and will permanently remove both images from the system.',
+            'Delete',
+            '#d32f2f'
+        );
+
+        if (!confirmed) return;
+
+        const success = await deleteBeforeAfterImage(id);
+        if (success) {
+            showNotification('Before & After image deleted successfully!', 'success');
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+        showNotification('Error deleting image: ' + error.message, 'error');
     }
 }

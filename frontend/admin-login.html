@@ -83,6 +83,47 @@
             transform: translateY(-2px);
         }
         
+        /* New Button Design */
+        .button {
+            background-color: #E43636;
+            color: #F6EFD2;
+            width: 8.5em;
+            height: 2.9em;
+            border: #E43636 0.2em solid;
+            border-radius: 11px;
+            text-align: center;
+            transition: all 0.6s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px auto;
+        }
+
+        .button:hover {
+            background-color: #c42e2e;
+            border-color: #c42e2e;
+            cursor: pointer;
+        }
+
+        .button svg {
+            width: 1.6em;
+            margin: -0.2em 0.8em 1em;
+            position: absolute;
+            display: flex;
+            transition: all 0.6s ease;
+        }
+
+        .button:hover svg {
+            transform: translateX(5px);
+        }
+
+        .text {
+            margin: 0 1.5em;
+        }
+        
         .back-home {
             position: absolute;
             top: 20px;
@@ -145,7 +186,9 @@
                     <input type="password" id="password" name="password" required>
                 </div>
                 
-                <button type="submit" class="submit-btn">Login to Admin Panel</button>
+                <button type="submit" class="button">
+                    <span class="text">Login to Admin Panel</span>
+                </button>
             </form>
             
             <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 12px; color: #666;">
@@ -246,7 +289,7 @@
             
             try {
                 // Show loading state
-                const submitBtn = this.querySelector('.submit-btn');
+                const submitBtn = this.querySelector('.button');
                 submitBtn.textContent = 'Logging In...';
                 submitBtn.disabled = true;
                 
@@ -284,7 +327,7 @@
                 showNotification('Error connecting to server', 'error');
             } finally {
                 // Reset button state
-                const submitBtn = this.querySelector('.submit-btn');
+                const submitBtn = this.querySelector('.button');
                 submitBtn.textContent = 'Login to Admin Panel';
                 submitBtn.disabled = false;
             }

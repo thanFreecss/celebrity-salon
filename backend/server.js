@@ -87,6 +87,9 @@ app.use('/api/bookings', require('./routes/bookings'));
 app.use('/api/services', require('./routes/services'));
 app.use('/api/employees', require('./routes/employees'));
 app.use('/api/admin', require('./routes/admin'));
+console.log('Loading before-after routes...');
+app.use('/api/before-after', require('./routes/beforeAfter'));
+console.log('Before-after routes loaded successfully');
 
 // Serve frontend routes
 app.get('*', (req, res) => {

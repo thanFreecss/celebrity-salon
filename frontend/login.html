@@ -78,6 +78,46 @@
             transform: translateY(-2px);
         }
         
+        /* New Button Design */
+        .button {
+            background-color: #ffffff00;
+            color: #fff;
+            width: 8.5em;
+            height: 2.9em;
+            border: #3654ff 0.2em solid;
+            border-radius: 11px;
+            text-align: right;
+            transition: all 0.6s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px auto;
+        }
+
+        .button:hover {
+            background-color: #3654ff;
+            cursor: pointer;
+        }
+
+        .button svg {
+            width: 1.6em;
+            margin: -0.2em 0.8em 1em;
+            position: absolute;
+            display: flex;
+            transition: all 0.6s ease;
+        }
+
+        .button:hover svg {
+            transform: translateX(5px);
+        }
+
+        .text {
+            margin: 0 1.5em;
+        }
+        
         .signup-link {
             margin-top: 20px;
             color: #666;
@@ -158,7 +198,9 @@
                     <a href="forgot-password.html">Forgot Password?</a>
                 </div>
                 
-                <button type="submit" class="submit-btn">Log In</button>
+                <button type="submit" class="button">
+                    <span class="text">Log In</span>
+                </button>
             </form>
             
             <div class="signup-link">

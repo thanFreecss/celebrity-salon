@@ -1,6 +1,9 @@
-// Wait for DOM to be ready before running all the JavaScript
+    // Wait for DOM to be ready before running all the JavaScript
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing application...');
+    
+    // Load Before & After images from backend
+    loadBeforeAfterImages();
     
     // Mobile menu functionality
     const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
@@ -956,3 +959,65 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Function to load Before & After images from backend
+async function loadBeforeAfterImages() {
+    try {
+        const API_BASE_URL = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL : 'http://localhost:5000/api';
+        const response = await fetch(`${API_BASE_URL}/before-after`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const gallery = document.getElementById('before-after-gallery');
+        
+        if (!gallery) {
+            console.error('Before & After gallery element not found');
+            return;
+        }
+        
+        if (!Array.isArray(data) || data.length === 0) {
+            gallery.innerHTML = `
+                <div class="empty-state">
+                    <p>No before & after images available yet.</p>
+                    <p>Check back soon for amazing transformations!</p>
+                </div>
+            `;
+            return;
+        }
+        
+        gallery.innerHTML = '';
+        
+        data.forEach(item => {
+            const pair = document.createElement('div');
+            pair.className = 'before-after-pair';
+            pair.innerHTML = `
+                <div class="image-container">
+                    <img src="${API_BASE_URL}/before-after/images/${item.beforeImage}" alt="Client Before" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5CZWZvcmU8L3RleHQ+Cjwvc3ZnPgo='">
+                    <div class="image-label before-label">Before</div>
+                </div>
+                <div class="image-container">
+                    <img src="${API_BASE_URL}/before-after/images/${item.afterImage}" alt="Client After" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjVGNUY1Ii8+Cjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTk5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5BZnRlcjwvdGV4dD4KPC9zdmc+Cg=='">
+                    <div class="image-label after-label">After</div>
+                </div>
+            `;
+            gallery.appendChild(pair);
+        });
+        
+        console.log(`Loaded ${data.length} before & after image pairs`);
+        
+    } catch (error) {
+        console.error('Error loading before & after images:', error);
+        const gallery = document.getElementById('before-after-gallery');
+        if (gallery) {
+            gallery.innerHTML = `
+                <div class="error-state">
+                    <p>Unable to load before & after images.</p>
+                    <p>Please try again later.</p>
+                </div>
+            `;
+        }
+    }
+}
