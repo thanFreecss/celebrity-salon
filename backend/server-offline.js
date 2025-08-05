@@ -62,24 +62,66 @@ app.post('/api/auth/forgotpassword', (req, res) => {
         });
     }
     
-    // Generate a mock reset token
-    const resetToken = 'mock-reset-token-' + Date.now();
-    const baseUrl = process.env.NODE_ENV === 'production' 
-        ? process.env.FRONTEND_URL || 'https://celebrity-styles-frontend.onrender.com'
-        : 'http://localhost:5000';
-    const resetUrl = `${baseUrl}/reset-password.html?token=${resetToken}`;
+    // Generate a mock OTP
+    const mockOTP = Math.floor(100000 + Math.random() * 900000).toString();
     
-    console.log('Mock password reset for email:', email);
-    console.log('Mock reset URL:', resetUrl);
+    console.log('Mock OTP generated for email:', email);
+    console.log('Mock OTP:', mockOTP);
     
     res.json({
         success: true,
-        message: 'Password reset link generated successfully (Offline Mode). Check console for reset URL.',
+        message: 'OTP sent successfully! Please check your email.',
         debug: {
-            resetUrl: resetUrl,
-            token: resetToken,
+            otp: mockOTP,
             email: email
         }
+    });
+});
+
+// Mock OTP verification endpoint
+app.post('/api/auth/verify-otp', (req, res) => {
+    const { email, otp } = req.body;
+    
+    if (!email || !otp) {
+        return res.status(400).json({
+            success: false,
+            message: 'Email and OTP are required'
+        });
+    }
+    
+    // Mock successful OTP verification
+    console.log('Mock OTP verification for email:', email, 'OTP:', otp);
+    
+    res.json({
+        success: true,
+        message: 'OTP verified successfully'
+    });
+});
+
+// Mock password reset endpoint
+app.post('/api/auth/reset-password', (req, res) => {
+    const { email, password } = req.body;
+    
+    if (!email || !password) {
+        return res.status(400).json({
+            success: false,
+            message: 'Email and password are required'
+        });
+    }
+    
+    if (password.length < 6) {
+        return res.status(400).json({
+            success: false,
+            message: 'Password must be at least 6 characters'
+        });
+    }
+    
+    // Mock successful password reset
+    console.log('Mock password reset for email:', email);
+    
+    res.json({
+        success: true,
+        message: 'Password reset successfully'
     });
 });
 

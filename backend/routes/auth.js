@@ -6,7 +6,7 @@ const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
-const { sendPasswordReset } = require('../utils/emailService');
+const { sendPasswordReset, sendOTPVerification } = require('../utils/emailService');
 
 // Check database connection
 const checkDBConnection = () => {
@@ -230,19 +230,50 @@ router.post('/forgotpassword', [
         const otp = user.generateOTP();
         await user.save({ validateBeforeSave: false });
 
-        // For now, just return success without sending email
-        // TODO: Configure email settings properly
-        console.log('OTP generated for password reset:', otp);
-        console.log('OTP sent to email:', email);
-        
-        res.json({
-            success: true,
-            message: 'OTP sent successfully! Please check your email.',
-            debug: {
-                otp: otp,
-                email: email
+        // Send OTP email
+        try {
+            const emailResult = await sendOTPVerification({
+                email: user.email,
+                name: user.name,
+                otp: otp
+            });
+
+            if (emailResult.success) {
+                console.log('OTP email sent successfully to:', email);
+                res.json({
+                    success: true,
+                    message: 'OTP sent successfully! Please check your email.',
+                    debug: {
+                        otp: otp,
+                        email: email
+                    }
+                });
+            } else {
+                console.error('Failed to send OTP email:', emailResult.error);
+                // Still return success but with debug info
+                res.json({
+                    success: true,
+                    message: 'OTP generated successfully! Please check your email.',
+                    debug: {
+                        otp: otp,
+                        email: email,
+                        emailError: emailResult.error
+                    }
+                });
             }
-        });
+        } catch (emailError) {
+            console.error('Error sending OTP email:', emailError);
+            // Still return success but with debug info
+            res.json({
+                success: true,
+                message: 'OTP generated successfully! Please check your email.',
+                debug: {
+                    otp: otp,
+                    email: email,
+                    emailError: emailError.message
+                }
+            });
+        }
     } catch (error) {
         console.error('Forgot password error:', error);
         res.status(500).json({
@@ -366,66 +397,6 @@ router.post('/reset-password', [
     }
 });
 
-// @route   PUT /api/auth/resetpassword/:resettoken
-// @desc    Reset password
-// @access  Public
-router.put('/resetpassword/:resettoken', [
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
-], async (req, res) => {
-    try {
-        // Check database connection first
-        if (!checkDBConnection()) {
-            console.log('Database not connected for reset password request');
-            return res.status(503).json({
-                success: false,
-                message: 'Database connection not available'
-            });
-        }
 
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({
-                success: false,
-                errors: errors.array()
-            });
-        }
-
-        // Get hashed token
-        const resetPasswordToken = crypto
-            .createHash('sha256')
-            .update(req.params.resettoken)
-            .digest('hex');
-
-        // Find user by token and check if token is expired
-        const user = await User.findOne({
-            resetPasswordToken,
-            resetPasswordExpire: { $gt: Date.now() }
-        });
-
-        if (!user) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid or expired reset token'
-            });
-        }
-
-        // Set new password
-        user.password = req.body.password;
-        user.resetPasswordToken = undefined;
-        user.resetPasswordExpire = undefined;
-        await user.save();
-
-        res.json({
-            success: true,
-            message: 'Password reset successful'
-        });
-    } catch (error) {
-        console.error('Reset password error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Server error'
-        });
-    }
-});
 
 module.exports = router; 

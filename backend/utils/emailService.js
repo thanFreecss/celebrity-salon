@@ -458,6 +458,166 @@ const emailTemplates = {
             </body>
             </html>
         `
+    }),
+
+    otpVerification: (otpData) => ({
+        subject: '🔐 Password Reset OTP - Celebrity Styles Hair Salon',
+        html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Password Reset OTP</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        line-height: 1.6;
+                        color: #333;
+                        max-width: 600px;
+                        margin: 0 auto;
+                        padding: 20px;
+                        background-color: #f5f5f5;
+                    }
+                    .container {
+                        background: white;
+                        border-radius: 15px;
+                        overflow: hidden;
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                    }
+                    .header {
+                        background: linear-gradient(135deg, #E43636 0%, #c62828 100%);
+                        color: white;
+                        padding: 40px 30px;
+                        text-align: center;
+                    }
+                    .header h1 {
+                        margin: 0;
+                        font-size: 28px;
+                        font-weight: bold;
+                    }
+                    .header p {
+                        margin: 10px 0 0 0;
+                        font-size: 16px;
+                        opacity: 0.9;
+                    }
+                    .content {
+                        padding: 40px 30px;
+                    }
+                    .greeting {
+                        font-size: 18px;
+                        margin-bottom: 30px;
+                        color: #333;
+                    }
+                    .otp-section {
+                        background: #f8f9fa;
+                        padding: 30px;
+                        border-radius: 12px;
+                        margin: 25px 0;
+                        border-left: 5px solid #E43636;
+                        text-align: center;
+                    }
+                    .otp-code {
+                        font-size: 48px;
+                        font-weight: bold;
+                        color: #E43636;
+                        letter-spacing: 8px;
+                        margin: 20px 0;
+                        font-family: 'Courier New', monospace;
+                        background: #fff;
+                        padding: 20px;
+                        border-radius: 8px;
+                        border: 2px dashed #E43636;
+                    }
+                    .warning {
+                        background: #fff3cd;
+                        border: 1px solid #ffeaa7;
+                        color: #856404;
+                        padding: 20px;
+                        border-radius: 8px;
+                        margin: 25px 0;
+                    }
+                    .warning ul {
+                        margin: 10px 0;
+                        padding-left: 20px;
+                    }
+                    .warning li {
+                        margin: 5px 0;
+                    }
+                    .contact-section {
+                        background: #e8f4fd;
+                        padding: 25px;
+                        border-radius: 12px;
+                        margin: 25px 0;
+                        border-left: 5px solid #2196f3;
+                    }
+                    .footer {
+                        background: #343a40;
+                        color: white;
+                        padding: 30px;
+                        text-align: center;
+                    }
+                    .footer p {
+                        margin: 5px 0;
+                        font-size: 14px;
+                    }
+                    .emoji {
+                        font-size: 20px;
+                        margin-right: 8px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🔐 Password Reset OTP</h1>
+                        <p>Celebrity Styles Hair Salon</p>
+                    </div>
+                    
+                    <div class="content">
+                        <div class="greeting">
+                            Hi <strong>${otpData.name}</strong>,<br>
+                            You requested to reset your password. Use the OTP code below to complete the process.
+                        </div>
+                        
+                        <div class="otp-section">
+                            <h3><span class="emoji">🔢</span>Your OTP Code:</h3>
+                            <div class="otp-code">${otpData.otp}</div>
+                            <p style="font-size: 16px; color: #666; margin-top: 15px;">
+                                Enter this 6-digit code on the password reset page
+                            </p>
+                        </div>
+                        
+                        <div class="warning">
+                            <strong><span class="emoji">⚠️</span>Important Security Information:</strong>
+                            <ul>
+                                <li>This OTP will expire in <strong>5 minutes</strong></li>
+                                <li>This OTP can only be used <strong>once</strong></li>
+                                <li>If you didn't request this password reset, please ignore this email</li>
+                                <li>Never share this OTP with anyone</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="contact-section">
+                            <h3><span class="emoji">📞</span>Need Help?</h3>
+                            <p>If you have any questions or need assistance, please contact us:</p>
+                            <p><strong>Phone:</strong> (0917)-1386-028<br>
+                            <strong>Email:</strong> cstyleshairsalon@gmail.com</p>
+                        </div>
+                        
+                        <p style="text-align: center; font-size: 16px; margin: 30px 0;">
+                            Thank you for choosing Celebrity Styles Hair Salon.<br>
+                            <strong>Stay beautiful!</strong>
+                        </p>
+                    </div>
+                    
+                    <div class="footer">
+                        <p>This is an automated email. Please do not reply to this message.</p>
+                        <p>If you didn't request this password reset, please contact us immediately.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `
     })
 };
 
@@ -510,9 +670,15 @@ const sendPasswordReset = async (resetData) => {
     return await sendEmail(resetData.email, 'passwordReset', resetData);
 };
 
+// Send OTP verification email
+const sendOTPVerification = async (otpData) => {
+    return await sendEmail(otpData.email, 'otpVerification', otpData);
+};
+
 module.exports = {
     sendEmail,
     sendBookingConfirmation,
     sendBookingCancellation,
-    sendPasswordReset
+    sendPasswordReset,
+    sendOTPVerification
 }; 
