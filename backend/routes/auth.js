@@ -201,7 +201,9 @@ router.post('/forgotpassword', [
             console.log('Database not connected for forgot password request');
             return res.status(503).json({
                 success: false,
-                message: 'Database connection not available'
+                message: 'Service temporarily unavailable. Please try again later or contact support if the issue persists.',
+                error: 'Database connection not available',
+                retryAfter: 30 // Suggest retry after 30 seconds
             });
         }
 

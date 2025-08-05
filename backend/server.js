@@ -17,6 +17,17 @@ connectDB().catch(err => {
     console.error('Connection error details:', err);
 });
 
+// Add process error handlers to prevent crashes
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    // Don't exit the process, just log the error
+});
+
+process.on('unhandledRejection', (err) => {
+    console.error('Unhandled Rejection:', err);
+    // Don't exit the process, just log the error
+});
+
 // Middleware
 app.use(cors({
     origin: process.env.NODE_ENV === 'production' 
