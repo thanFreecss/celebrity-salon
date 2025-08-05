@@ -242,40 +242,42 @@
                     <input type="email" id="email" name="email" required>
                 </div>
                 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="service">Service <span class="required">*</span></label>
-                        <select id="service" name="service" required>
-                            <option value="">Select a service...</option>
-                            <option value="manicure">Manicure - ₱150</option>
-                            <option value="pedicure">Pedicure - ₱199</option>
-                            <option value="footspa">Footspa - ₱499</option>
-                            <option value="manicure-gel">Manicure Gel Polish - ₱499</option>
-                            <option value="manipedi-gel">Mani/Pedi Gel Polish - ₱849</option>
-                            <option value="pedi-gel-footspa">Pedi Gel Polish w/ Footspa - ₱849</option>
-                            <option value="pedi-gel">Pedi w/ Gel Polish - ₱499</option>
-                            <option value="soft-gel-extension">Soft Gel Extension w/ Gel Polish - ₱999</option>
-                            <option value="foot-massage">Foot massage 30 minutes - ₱150</option>
-                            <option value="hand-massage">Hand massage 30 minutes - ₱150</option>
-                            <option value="traditional-hamu">Traditional Hair and Make up - ₱1000</option>
-                            <option value="glam-hamu">Glam Hair & Make up - ₱1500</option>
-                            <option value="airbrush-hamu">Air Brush, Hair & Make up - ₱2000</option>
-                            <option value="classic-lashes">Classic - ₱499</option>
-                            <option value="cat-eye-lashes">Cat Eye - ₱599</option>
-                            <option value="wispy-lashes">Wispy - ₱599</option>
-                            <option value="volume-lashes">Volume - ₱699</option>
-                            <option value="lash-lift">Lash Lift - ₱399</option>
-                            <option value="lash-removal">Lash Removal - ₱100</option>
-                            <option value="brow-shave">Brow Shave - ₱50</option>
-                            <option value="brow-tint">Brow Tint and Last tint - ₱600</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="searchService">Search Service</label>
-                        <input type="text" id="searchService" name="searchService" placeholder="Search...">
-                    </div>
-                </div>
+                                 <div class="form-row">
+                     <div class="form-group">
+                         <label for="service">Service <span class="required">*</span></label>
+                         <select id="service" name="service" required>
+                             <option value="">Select a service...</option>
+                             <option value="manicure">Manicure - ₱150</option>
+                             <option value="pedicure">Pedicure - ₱199</option>
+                             <option value="footspa">Footspa - ₱499</option>
+                             <option value="manicure-gel">Manicure Gel Polish - ₱499</option>
+                             <option value="manipedi-gel">Mani/Pedi Gel Polish - ₱849</option>
+                             <option value="pedi-gel-footspa">Pedi Gel Polish w/ Footspa - ₱849</option>
+                             <option value="pedi-gel">Pedi w/ Gel Polish - ₱499</option>
+                             <option value="soft-gel-extension">Soft Gel Extension w/ Gel Polish - ₱999</option>
+                             <option value="foot-massage">Foot massage 30 minutes - ₱150</option>
+                             <option value="hand-massage">Hand massage 30 minutes - ₱150</option>
+                             <option value="traditional-hamu">Traditional Hair and Make up - ₱1000</option>
+                             <option value="glam-hamu">Glam Hair & Make up - ₱1500</option>
+                             <option value="airbrush-hamu">Air Brush, Hair & Make up - ₱2000</option>
+                             <option value="classic-lashes">Classic - ₱499</option>
+                             <option value="cat-eye-lashes">Cat Eye - ₱599</option>
+                             <option value="wispy-lashes">Wispy - ₱599</option>
+                             <option value="volume-lashes">Volume - ₱699</option>
+                             <option value="lash-lift">Lash Lift - ₱399</option>
+                             <option value="lash-removal">Lash Removal - ₱100</option>
+                             <option value="brow-shave">Brow Shave - ₱50</option>
+                             <option value="brow-tint">Brow Tint and Last tint - ₱600</option>
+                         </select>
+                     </div>
+                     
+                     <div class="form-group">
+                         <label for="selectedEmployee">Available Employees</label>
+                         <select id="selectedEmployee" name="selectedEmployee" disabled>
+                             <option value="">Select an employee</option>
+                         </select>
+                     </div>
+                 </div>
                 
                 <div class="service-details" id="serviceDetails" style="display: none;">
                     <h4>Service Details:</h4>
@@ -345,7 +347,15 @@
 
         // Function to update available employees based on selected service
         async function updateAvailableEmployees(selectedService) {
+            console.log('updateAvailableEmployees called with service:', selectedService);
+            
             const employeeSelect = document.getElementById('selectedEmployee');
+            console.log('Employee select element:', employeeSelect);
+            
+            if (!employeeSelect) {
+                console.error('Employee select element not found!');
+                return;
+            }
             
             if (!selectedService) {
                 // Clear employee options if no service is selected
@@ -358,13 +368,17 @@
                 
                 // Call the backend API to get employees for the selected service
                 const apiUrl = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL + `/employees/service/${selectedService}` : `http://localhost:5000/api/employees/service/${selectedService}`;
+                console.log('API URL:', apiUrl);
+                
                 const response = await fetch(apiUrl);
+                console.log('Response status:', response.status);
                 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 
                 const data = await response.json();
+                console.log('Response data:', data);
                 
                 if (data.success) {
                     const employees = data.data;
@@ -386,6 +400,7 @@
                             employeeSelect.appendChild(option);
                         });
                         employeeSelect.disabled = false;
+                        console.log('Employee options added successfully');
                     }
                 } else {
                     console.error('Failed to fetch employees:', data.message);
@@ -399,72 +414,96 @@
             }
         }
 
-        // Service selection handler
-        document.getElementById('service').addEventListener('change', function() {
-            const serviceDetails = document.getElementById('serviceDetails');
-            const selectedService = this.value;
+        // Wait for DOM to be ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, setting up event listeners');
             
-            if (selectedService && serviceData[selectedService]) {
-                const data = serviceData[selectedService];
-                document.getElementById('estimatedPrice').textContent = data.price;
-                document.getElementById('estimatedDuration').textContent = data.duration;
-                document.getElementById('serviceDescription').textContent = data.description;
-                serviceDetails.style.display = 'block';
-                
-                // Update available employees based on selected service
-                updateAvailableEmployees(selectedService);
-            } else {
-                serviceDetails.style.display = 'none';
-                // Clear employee options if no service is selected
-                const employeeSelect = document.getElementById('selectedEmployee');
-                if (employeeSelect) {
-                    employeeSelect.innerHTML = '<option value="">Select an employee</option>';
-                }
+            // Service selection handler
+            const serviceSelect = document.getElementById('service');
+            if (serviceSelect) {
+                serviceSelect.addEventListener('change', function() {
+                    console.log('Service selection changed');
+                    const serviceDetails = document.getElementById('serviceDetails');
+                    const selectedService = this.value;
+                    console.log('Selected service:', selectedService);
+                    
+                    if (selectedService && serviceData[selectedService]) {
+                        const data = serviceData[selectedService];
+                        document.getElementById('estimatedPrice').textContent = data.price;
+                        document.getElementById('estimatedDuration').textContent = data.duration;
+                        document.getElementById('serviceDescription').textContent = data.description;
+                        serviceDetails.style.display = 'block';
+                        
+                        // Update available employees based on selected service
+                        console.log('Calling updateAvailableEmployees with:', selectedService);
+                        updateAvailableEmployees(selectedService);
+                    } else {
+                        serviceDetails.style.display = 'none';
+                        // Clear employee options if no service is selected
+                        const employeeSelect = document.getElementById('selectedEmployee');
+                        if (employeeSelect) {
+                            employeeSelect.innerHTML = '<option value="">Select an employee</option>';
+                        }
+                    }
+                });
             }
-        });
 
-        // Time slot selection
-        document.querySelectorAll('.time-chip').forEach(chip => {
-            chip.addEventListener('click', function() {
-                document.querySelectorAll('.time-chip').forEach(c => c.classList.remove('selected'));
-                this.classList.add('selected');
+            // Time slot selection
+            document.querySelectorAll('.time-chip').forEach(chip => {
+                chip.addEventListener('click', function() {
+                    document.querySelectorAll('.time-chip').forEach(c => c.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
             });
-        });
 
-        // Form submission
-        document.getElementById('bookingForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const bookingData = {
-                fullName: formData.get('fullName'),
-                mobileNumber: formData.get('mobileNumber'),
-                email: formData.get('email'),
-                service: formData.get('service'),
-                appointmentDate: formData.get('appointmentDate'),
-                selectedTime: document.querySelector('.time-chip.selected')?.dataset.time || 'Not selected'
-            };
-            
-            // Validate time selection
-            if (!document.querySelector('.time-chip.selected')) {
-                alert('Please select a time slot');
-                return;
+            // Form submission
+            const bookingForm = document.getElementById('bookingForm');
+            if (bookingForm) {
+                bookingForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(this);
+                    const bookingData = {
+                        fullName: formData.get('fullName'),
+                        mobileNumber: formData.get('mobileNumber'),
+                        email: formData.get('email'),
+                        service: formData.get('service'),
+                        appointmentDate: formData.get('appointmentDate'),
+                        selectedTime: document.querySelector('.time-chip.selected')?.dataset.time || 'Not selected'
+                    };
+                    
+                    // Validate time selection
+                    if (!document.querySelector('.time-chip.selected')) {
+                        alert('Please select a time slot');
+                        return;
+                    }
+                    
+                    // Show success message
+                    alert('Booking submitted successfully!\n\nName: ' + bookingData.fullName + 
+                          '\nMobile: ' + bookingData.mobileNumber + 
+                          '\nEmail: ' + bookingData.email + 
+                          '\nService: ' + bookingData.service + 
+                          '\nStylist: ' + (formData.get('selectedEmployee') || 'Not selected') + 
+                          '\nDate: ' + bookingData.appointmentDate + 
+                          '\nTime: ' + bookingData.selectedTime);
+                    
+                    // In a real application, you would send this data to your backend
+                    console.log('Booking data:', bookingData);
+                    
+                    // Close modal
+                    closeBookingModal();
+                });
             }
-            
-            // Show success message
-            alert('Booking submitted successfully!\n\nName: ' + bookingData.fullName + 
-                  '\nMobile: ' + bookingData.mobileNumber + 
-                  '\nEmail: ' + bookingData.email + 
-                  '\nService: ' + bookingData.service + 
-                  '\nStylist: ' + (formData.get('selectedEmployee') || 'Not selected') + 
-                  '\nDate: ' + bookingData.appointmentDate + 
-                  '\nTime: ' + bookingData.selectedTime);
-            
-            // In a real application, you would send this data to your backend
-            console.log('Booking data:', bookingData);
-            
-            // Close modal
-            closeBookingModal();
+
+            // Close modal when clicking outside
+            const bookingModal = document.getElementById('bookingModal');
+            if (bookingModal) {
+                bookingModal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeBookingModal();
+                    }
+                });
+            }
         });
 
         function closeBookingModal() {
@@ -474,13 +513,6 @@
         function openBookingModal() {
             document.getElementById('bookingModal').classList.add('show');
         }
-
-        // Close modal when clicking outside
-        document.getElementById('bookingModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeBookingModal();
-            }
-        });
     </script>
     <script src="config.js"></script>
 </body>

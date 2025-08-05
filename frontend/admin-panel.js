@@ -287,7 +287,7 @@ function populateUserTable(data = users) {
         const statusClass = user.isActive ? 'status-active' : 'status-inactive';
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${user._id ? user._id.slice(-6).toUpperCase() : 'N/A'}</td>
+            <td>${index + 1}</td>
             <td>${user.name || 'N/A'}</td>
             <td>${user.email || 'N/A'}</td>
             <td>${user.phone || 'N/A'}</td>

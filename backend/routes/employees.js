@@ -31,16 +31,58 @@ router.get('/service/:serviceId', async (req, res) => {
     try {
         const { serviceId } = req.params;
         
-        // Find employees who either:
-        // 1. Have the specific service in their specialties, OR
-        // 2. Have no specialties assigned (empty array) - these can work any service
-        const employees = await Employee.find({
-            isActive: true,
-            $or: [
-                { specialties: serviceId },
-                { specialties: { $size: 0 } }  // Empty specialties array
-            ]
-        });
+        let query = { isActive: true };
+        
+        // Define manicurist services list
+        const manicuristServices = [
+            'manicure', 'pedicure', 'footspa', 'manicure-gel', 'manipedi-gel',
+            'pedi-gel-footspa', 'pedi-gel', 'soft-gel-extension'
+        ];
+        
+        // Check if the selected service is a manicurist service
+        if (manicuristServices.includes(serviceId)) {
+            // For manicurist services: only show employees with "Manicurist" role
+            query.position = 'Manicurist';
+            
+            // Map services to what the Manicurist actually offers
+            let mappedServices = [];
+            
+            switch (serviceId) {
+                case 'manicure':
+                case 'pedicure':
+                case 'manicure-gel':
+                case 'manipedi-gel':
+                    // Direct matches - Manicurist has these
+                    mappedServices = [serviceId];
+                    break;
+                case 'footspa':
+                    // Map footspa to pedicure (closest match)
+                    mappedServices = ['pedicure'];
+                    break;
+                case 'pedi-gel-footspa':
+                    // Map to pedicure and manicure-gel (combination)
+                    mappedServices = ['pedicure', 'manicure-gel'];
+                    break;
+                case 'pedi-gel':
+                    // Map to pedicure and manicure-gel (combination)
+                    mappedServices = ['pedicure', 'manicure-gel'];
+                    break;
+                case 'soft-gel-extension':
+                    // Map to manicure-gel (closest match)
+                    mappedServices = ['manicure-gel'];
+                    break;
+                default:
+                    mappedServices = [serviceId];
+            }
+            
+            // Find employees who offer any of the mapped services
+            query.specialties = { $in: mappedServices };
+        } else {
+            // For other services, find employees who have the specific service in their specialties
+            query.specialties = serviceId;
+        }
+
+        const employees = await Employee.find(query);
 
         res.json({
             success: true,

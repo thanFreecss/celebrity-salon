@@ -1,4 +1,7 @@
+// Wait for DOM to be ready before running all the JavaScript
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing application...');
+    
     // Mobile menu functionality
     const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
     const navMenu = document.getElementById('nav-menu');
@@ -280,10 +283,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Service selection handler
     const serviceSelect = document.getElementById('service');
+    console.log('Service select element:', serviceSelect);
     if (serviceSelect) {
         serviceSelect.addEventListener('change', function() {
+            console.log('Service selection changed');
             const serviceDetails = document.getElementById('serviceDetails');
             const selectedService = this.value;
+            console.log('Selected service:', selectedService);
             
             if (selectedService && serviceData[selectedService]) {
                 const data = serviceData[selectedService];
@@ -295,16 +301,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 // TODO: Backend Integration - Filter employees based on selected service
                 // This will be implemented in the backend to show only employees
                 // who are qualified for the selected service
+                console.log('Calling updateAvailableEmployees with:', selectedService);
                 updateAvailableEmployees(selectedService);
             } else {
                 serviceDetails.style.display = 'none';
+                console.log('No service data found for:', selectedService);
             }
         });
+        console.log('Service selection event listener added');
+    } else {
+        console.error('Service select element not found!');
     }
 
     // Function to update available employees based on selected service
     async function updateAvailableEmployees(selectedService) {
+        console.log('updateAvailableEmployees called with service:', selectedService);
+        
         const employeeSelect = document.getElementById('selectedEmployee');
+        console.log('Employee select element:', employeeSelect);
+        
+        if (!employeeSelect) {
+            console.error('Employee select element not found!');
+            return;
+        }
         
         if (!selectedService) {
             // Clear employee options if no service is selected
@@ -317,13 +336,17 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Call the backend API to get employees for the selected service
             const apiUrl = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL + `/employees/service/${selectedService}` : `http://localhost:5000/api/employees/service/${selectedService}`;
+            console.log('API URL:', apiUrl);
+            
             const response = await fetch(apiUrl);
+            console.log('Response status:', response.status);
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
             const data = await response.json();
+            console.log('Response data:', data);
             
             if (data.success) {
                 const employees = data.data;
@@ -341,14 +364,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     employees.forEach(employee => {
                         const option = document.createElement('option');
                         option.value = employee._id;
-                        
-                        // Show indication if employee has no specialties
-                        const specialtyIndicator = employee.specialties.length === 0 ? ' (Available for all services)' : '';
-                        option.textContent = `${employee.name} (${employee.position})${specialtyIndicator}`;
-                        
+                        option.textContent = `${employee.name} (${employee.position})`;
                         employeeSelect.appendChild(option);
                     });
                     employeeSelect.disabled = false;
+                    console.log('Employee options added successfully');
                 }
             } else {
                 console.error('Failed to fetch employees:', data.message);
