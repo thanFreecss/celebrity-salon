@@ -42,6 +42,9 @@ const userSchema = new mongoose.Schema({
     // Password reset fields
     resetPasswordToken: String,
     resetPasswordExpire: Date,
+    // OTP fields
+    otpCode: String,
+    otpExpire: Date,
     createdAt: {
         type: Date,
         default: Date.now
@@ -88,6 +91,39 @@ userSchema.methods.getResetPasswordToken = function() {
     this.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // 10 minutes
 
     return resetToken;
+};
+
+// Generate OTP code
+userSchema.methods.generateOTP = function() {
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Set OTP and expire time (5 minutes)
+    this.otpCode = otp;
+    this.otpExpire = Date.now() + 5 * 60 * 1000; // 5 minutes
+    
+    return otp;
+};
+
+// Verify OTP code
+userSchema.methods.verifyOTP = function(enteredOTP) {
+    if (!this.otpCode || !this.otpExpire) {
+        return false;
+    }
+    
+    // Check if OTP is expired
+    if (Date.now() > this.otpExpire) {
+        return false;
+    }
+    
+    // Check if OTP matches
+    return this.otpCode === enteredOTP;
+};
+
+// Clear OTP after use
+userSchema.methods.clearOTP = function() {
+    this.otpCode = undefined;
+    this.otpExpire = undefined;
 };
 
 module.exports = mongoose.model('User', userSchema); 

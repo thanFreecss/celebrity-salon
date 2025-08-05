@@ -80,13 +80,13 @@
         
         /* New Button Design */
         .button {
-            background-color: #ffffff00;
+            background-color: #3654ff;
             color: #fff;
             width: 8.5em;
             height: 2.9em;
             border: #3654ff 0.2em solid;
             border-radius: 11px;
-            text-align: right;
+            text-align: center;
             transition: all 0.6s ease;
             position: relative;
             display: flex;
@@ -95,11 +95,14 @@
             font-weight: 600;
             font-size: 16px;
             margin: 20px auto;
+            cursor: pointer;
         }
 
         .button:hover {
-            background-color: #3654ff;
-            cursor: pointer;
+            background-color: #2a42cc;
+            border-color: #2a42cc;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(54, 84, 255, 0.3);
         }
 
         .button svg {
@@ -299,7 +302,7 @@
             
             try {
                 // Show loading state
-                const submitBtn = this.querySelector('.submit-btn');
+                const submitBtn = this.querySelector('.button');
                 const originalText = submitBtn.textContent;
                 submitBtn.textContent = 'Logging In...';
                 submitBtn.disabled = true;
@@ -339,7 +342,7 @@
                 showNotification('Error connecting to server', 'error');
             } finally {
                 // Reset button state
-                const submitBtn = this.querySelector('.submit-btn');
+                const submitBtn = this.querySelector('.button');
                 submitBtn.textContent = 'Log In';
                 submitBtn.disabled = false;
             }

@@ -241,31 +241,7 @@ async function updateBeforeAfterImage(id, updateData) {
     }
 }
 
-async function deleteBeforeAfterImage(id) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/before-after/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${getAuthToken()}`
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            showNotification('Before & After image deleted successfully!', 'success');
-            await fetchBeforeAfterImages(); // Refresh the list
-            return true;
-        } else {
-            showNotification('Delete failed: ' + (data.message || 'Unknown error'), 'error');
-            return false;
-        }
-    } catch (error) {
-        console.error('Delete error:', error);
-        showNotification('Error deleting image: ' + error.message, 'error');
-        return false;
-    }
-}
+
 
 // Employee CRUD Operations
 async function createEmployee(employeeData) {
@@ -2048,12 +2024,26 @@ async function deleteBeforeAfterImage(id) {
 
         if (!confirmed) return;
 
-        const success = await deleteBeforeAfterImage(id);
-        if (success) {
+        const response = await fetch(`${API_BASE_URL}/before-after/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
             showNotification('Before & After image deleted successfully!', 'success');
+            await fetchBeforeAfterImages(); // Refresh the list
+            return true;
+        } else {
+            showNotification('Delete failed: ' + (data.message || 'Unknown error'), 'error');
+            return false;
         }
     } catch (error) {
         console.error('Delete error:', error);
         showNotification('Error deleting image: ' + error.message, 'error');
+        return false;
     }
 }
