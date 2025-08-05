@@ -64,7 +64,10 @@ app.post('/api/auth/forgotpassword', (req, res) => {
     
     // Generate a mock reset token
     const resetToken = 'mock-reset-token-' + Date.now();
-    const resetUrl = `http://localhost:5000/frontend/reset-password.html?token=${resetToken}`;
+    const baseUrl = process.env.NODE_ENV === 'production' 
+        ? process.env.FRONTEND_URL || 'https://celebrity-styles-frontend.onrender.com'
+        : 'http://localhost:5000';
+    const resetUrl = `${baseUrl}/reset-password.html?token=${resetToken}`;
     
     console.log('Mock password reset for email:', email);
     console.log('Mock reset URL:', resetUrl);

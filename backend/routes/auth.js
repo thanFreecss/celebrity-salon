@@ -231,7 +231,10 @@ router.post('/forgotpassword', [
         await user.save({ validateBeforeSave: false });
 
         // Create reset url
-        const resetUrl = `${req.protocol}://${req.get('host')}/frontend/reset-password.html?token=${resetToken}`;
+        const baseUrl = process.env.NODE_ENV === 'production' 
+            ? process.env.FRONTEND_URL || 'https://celebrity-styles-frontend.onrender.com'
+            : `${req.protocol}://${req.get('host')}`;
+        const resetUrl = `${baseUrl}/reset-password.html?token=${resetToken}`;
 
         // Email data
         const emailData = {
