@@ -278,10 +278,15 @@ document.addEventListener('DOMContentLoaded', function() {
         'brow-tint': { price: '₱600', duration: '45 minutes', description: 'Brow tint and lash tint' }
     };
 
-    // Set minimum date to today
+    // Set minimum date to today and maximum date to 14 days from today
     const appointmentDateInput = document.getElementById('appointmentDate');
     if (appointmentDateInput) {
-        appointmentDateInput.min = new Date().toISOString().split('T')[0];
+        const today = new Date();
+        const maxDate = new Date();
+        maxDate.setDate(today.getDate() + 14);
+        
+        appointmentDateInput.min = today.toISOString().split('T')[0];
+        appointmentDateInput.max = maxDate.toISOString().split('T')[0];
     }
 
     // Service selection handler
@@ -316,6 +321,20 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('Service select element not found!');
     }
 
+    // Appointment date selection handler
+    const dateInput = document.getElementById('appointmentDate');
+    if (dateInput) {
+        dateInput.addEventListener('change', function() {
+            console.log('Appointment date changed');
+            const selectedService = document.getElementById('service').value;
+            if (selectedService) {
+                console.log('Updating available employees due to date change');
+                updateAvailableEmployees(selectedService);
+            }
+        });
+        console.log('Appointment date event listener added');
+    }
+
     // Function to update available employees based on selected service
     async function updateAvailableEmployees(selectedService) {
         console.log('updateAvailableEmployees called with service:', selectedService);
@@ -337,8 +356,18 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             console.log('Fetching employees for service:', selectedService);
             
+            // Get appointment date if available
+            const appointmentDateInput = document.getElementById('appointmentDate');
+            const appointmentDate = appointmentDateInput ? appointmentDateInput.value : null;
+            
             // Call the backend API to get employees for the selected service
-            const apiUrl = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL + `/employees/service/${selectedService}` : `http://localhost:5000/api/employees/service/${selectedService}`;
+            let apiUrl = window.APP_CONFIG ? window.APP_CONFIG.API_BASE_URL + `/employees/service/${selectedService}` : `http://localhost:5000/api/employees/service/${selectedService}`;
+            
+            // Add appointment date as query parameter if available
+            if (appointmentDate) {
+                apiUrl += `?appointmentDate=${appointmentDate}`;
+            }
+            
             console.log('API URL:', apiUrl);
             
             const response = await fetch(apiUrl);
@@ -482,7 +511,7 @@ document.addEventListener('DOMContentLoaded', function() {
                           '\nMobile: ' + bookingData.mobileNumber + 
                           '\nEmail: ' + bookingData.email + 
                           '\nService: ' + bookingData.service + 
-                          '\nEmployee: ' + (bookingData.selectedEmployee || 'Not selected') + 
+                          '\nEmployee: ' + (bookingData.selectedEmployee || 'Will be assigned by salon') + 
                           '\nDate: ' + bookingData.appointmentDate + 
                           '\nTime: ' + bookingData.selectedTime;
                     

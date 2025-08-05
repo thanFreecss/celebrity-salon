@@ -30,6 +30,7 @@ router.get('/', async (req, res) => {
 router.get('/service/:serviceId', async (req, res) => {
     try {
         const { serviceId } = req.params;
+        const { appointmentDate } = req.query; // Get appointment date from query params
         
         let query = { isActive: true };
         
@@ -82,39 +83,29 @@ router.get('/service/:serviceId', async (req, res) => {
             query.specialties = serviceId;
         }
 
-        const employees = await Employee.find(query);
+        let employees = await Employee.find(query);
 
-        res.json({
-            success: true,
-            count: employees.length,
-            data: employees
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: 'Server error'
-        });
-    }
-});
-
-// @route   GET /api/employees/:id
-// @desc    Get single employee
-// @access  Public
-router.get('/:id', async (req, res) => {
-    try {
-        const employee = await Employee.findById(req.params.id);
-
-        if (!employee) {
-            return res.status(404).json({
-                success: false,
-                message: 'Employee not found'
+        // Filter out employees who are on leave on the appointment date
+        if (appointmentDate) {
+            const appointmentDateObj = new Date(appointmentDate);
+            appointmentDateObj.setHours(0, 0, 0, 0);
+            
+            employees = employees.filter(employee => {
+                // Check if employee has any leave dates that match the appointment date
+                const isOnLeave = employee.leaveDates.some(leaveDate => {
+                    const leaveDateObj = new Date(leaveDate);
+                    leaveDateObj.setHours(0, 0, 0, 0);
+                    return leaveDateObj.getTime() === appointmentDateObj.getTime();
+                });
+                
+                return !isOnLeave;
             });
         }
 
         res.json({
             success: true,
-            data: employee
+            count: employees.length,
+            data: employees
         });
     } catch (error) {
         console.error(error);
@@ -205,6 +196,218 @@ router.post('/', protect, admin, async (req, res) => {
             success: false,
             message: 'Server error',
             error: error.message
+        });
+    }
+});
+
+// @route   PUT /api/employees/:id/leave-dates
+// @desc    Add leave dates to employee (admin only)
+// @access  Private
+router.put('/:id/leave-dates', protect, admin, async (req, res) => {
+    console.log('PUT /api/employees/:id/leave-dates called');
+    console.log('Request params:', req.params);
+    console.log('Request body:', req.body);
+    
+    try {
+        const employee = await Employee.findById(req.params.id);
+        console.log('Employee found:', employee ? 'Yes' : 'No');
+
+        if (!employee) {
+            console.log('Employee not found for ID:', req.params.id);
+            return res.status(404).json({
+                success: false,
+                message: 'Employee not found'
+            });
+        }
+
+        const { leaveDates } = req.body;
+        console.log('Leave dates from request:', leaveDates);
+
+        if (!leaveDates || !Array.isArray(leaveDates)) {
+            console.log('Invalid leave dates format');
+            return res.status(400).json({
+                success: false,
+                message: 'Leave dates must be an array'
+            });
+        }
+
+        // Validate dates are at least 15 days ahead from today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const minDate = new Date();
+        minDate.setDate(today.getDate() + 15); // 15 days minimum
+
+        const validDates = leaveDates.filter(date => {
+            const checkDate = new Date(date);
+            checkDate.setHours(0, 0, 0, 0);
+            return checkDate >= minDate;
+        });
+
+        console.log('Valid dates:', validDates);
+
+        if (validDates.length === 0) {
+            console.log('No valid dates provided');
+            return res.status(400).json({
+                success: false,
+                message: 'No valid leave dates provided. Dates must be scheduled at least 15 days in advance.'
+            });
+        }
+
+        // Helper function to get the week start (Monday) for a given date
+        function getWeekStart(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+            return new Date(d.setDate(diff));
+        }
+
+        // Helper function to check if two dates are in the same week (Monday to Sunday)
+        function isSameWeek(date1, date2) {
+            const week1 = getWeekStart(date1);
+            const week2 = getWeekStart(date2);
+            return week1.getTime() === week2.getTime();
+        }
+
+        // Helper function to check if employee already has a leave in the same week
+        function hasLeaveInSameWeek(leaveDates, newDate) {
+            if (!leaveDates || leaveDates.length === 0) {
+                return false;
+            }
+            
+            return leaveDates.some(existingDate => {
+                return isSameWeek(new Date(existingDate), new Date(newDate));
+            });
+        }
+
+        // Backend validation: Check for duplicate dates and same week conflicts
+        const existingDates = employee.leaveDates.map(date => date.toISOString().split('T')[0]);
+        const newDates = validDates.filter(date => {
+            const dateStr = new Date(date).toISOString().split('T')[0];
+            
+            // Check for exact duplicate dates
+            if (existingDates.includes(dateStr)) {
+                return false;
+            }
+            
+            // Check for same week conflicts
+            if (hasLeaveInSameWeek(employee.leaveDates, date)) {
+                return false;
+            }
+            
+            return true;
+        });
+
+        console.log('New dates to add:', newDates);
+
+        if (newDates.length === 0) {
+            console.log('No valid dates to add (duplicates or same week conflicts)');
+            return res.status(400).json({
+                success: false,
+                message: 'This employee already has a leave scheduled for this week.'
+            });
+        }
+
+        employee.leaveDates.push(...newDates);
+        await employee.save();
+        console.log('Employee saved successfully');
+
+        res.json({
+            success: true,
+            message: `${newDates.length} leave date(s) added successfully`,
+            data: employee
+        });
+    } catch (error) {
+        console.error('Error in PUT /api/employees/:id/leave-dates:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+});
+
+// @route   DELETE /api/employees/:id/leave-dates
+// @desc    Remove leave dates from employee (admin only)
+// @access  Private
+router.delete('/:id/leave-dates', protect, admin, async (req, res) => {
+    console.log('DELETE /api/employees/:id/leave-dates called');
+    console.log('Request params:', req.params);
+    console.log('Request body:', req.body);
+    
+    try {
+        const employee = await Employee.findById(req.params.id);
+        console.log('Employee found:', employee ? 'Yes' : 'No');
+
+        if (!employee) {
+            console.log('Employee not found for ID:', req.params.id);
+            return res.status(404).json({
+                success: false,
+                message: 'Employee not found'
+            });
+        }
+
+        const { leaveDates } = req.body;
+        console.log('Leave dates to remove:', leaveDates);
+
+        if (!leaveDates || !Array.isArray(leaveDates)) {
+            console.log('Invalid leave dates format');
+            return res.status(400).json({
+                success: false,
+                message: 'Leave dates must be an array'
+            });
+        }
+
+        // Remove specified dates
+        const datesToRemove = leaveDates.map(date => new Date(date).toISOString().split('T')[0]);
+        const originalCount = employee.leaveDates.length;
+        
+        employee.leaveDates = employee.leaveDates.filter(date => {
+            const dateStr = date.toISOString().split('T')[0];
+            return !datesToRemove.includes(dateStr);
+        });
+
+        await employee.save();
+        console.log('Employee saved successfully');
+
+        const removedCount = originalCount - employee.leaveDates.length;
+        console.log('Removed count:', removedCount);
+
+        res.json({
+            success: true,
+            message: `${removedCount} leave date(s) removed successfully`,
+            data: employee
+        });
+    } catch (error) {
+        console.error('Error in DELETE /api/employees/:id/leave-dates:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+});
+
+// @route   GET /api/employees/:id
+// @desc    Get single employee
+// @access  Public
+router.get('/:id', async (req, res) => {
+    try {
+        const employee = await Employee.findById(req.params.id);
+
+        if (!employee) {
+            return res.status(404).json({
+                success: false,
+                message: 'Employee not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: employee
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
         });
     }
 });

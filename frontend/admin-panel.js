@@ -395,7 +395,7 @@ function populateEmployeeTable(data = employees) {
                     </div>
                 </div>
             </div>
-            <div class="employee-services">
+            <div class="employee-services" onclick="event.stopPropagation();">
                 <div class="services-title">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
@@ -409,18 +409,292 @@ function populateEmployeeTable(data = employees) {
                     }
                 </div>
             </div>
-            <div class="expand-indicator">Click to view services</div>
+            
+            <div class="employee-leave-dates" onclick="event.stopPropagation();">
+                <div class="leave-dates-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+                    </svg>
+                    Leave Dates (15+ days ahead, 1 per week)
+                </div>
+                <div class="leave-dates-content">
+                    <div class="leave-dates-list" id="leave-dates-${employee._id}">
+                        ${employee.leaveDates && employee.leaveDates.length > 0 ? 
+                            employee.leaveDates.map(date => {
+                                const dateObj = new Date(date);
+                                const formattedDate = dateObj.toLocaleDateString('en-US', { 
+                                    month: 'short', 
+                                    day: 'numeric',
+                                    year: 'numeric'
+                                });
+                                const weekStart = getWeekStart(dateObj);
+                                const weekEnd = new Date(weekStart);
+                                weekEnd.setDate(weekStart.getDate() + 6);
+                                const weekRange = `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+                                return `<span class="leave-date-tag" onclick="event.stopPropagation(); removeLeaveDate('${employee._id}', '${date}')" title="Click to remove - Week: ${weekRange}">${formattedDate}</span>`;
+                            }).join('') : 
+                            '<span class="no-leave-dates">No leave dates scheduled</span>'
+                        }
+                    </div>
+                    <div class="leave-dates-controls">
+                        <input type="date" class="leave-date-input" id="leave-date-input-${employee._id}" 
+                               min="${new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}"
+                               onclick="event.stopPropagation();"
+                               onchange="validateLeaveDate('${employee._id}', this.value)">
+                        <button class="add-leave-date-btn" id="add-leave-btn-${employee._id}" onclick="event.stopPropagation(); addLeaveDate('${employee._id}')" title="Add Leave Date (Minimum 15 days ahead, Maximum 1 per week)">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="validation-message" id="validation-msg-${employee._id}"></div>
+                </div>
+            </div>
+            <div class="expand-indicator">Click to view services & leave dates</div>
         `;
         
-        // Add click event to expand/collapse services
+        // Add click event to expand/collapse services (single-active accordion)
         card.addEventListener('click', function() {
-            this.classList.toggle('expanded');
+            const isCurrentlyExpanded = this.classList.contains('expanded');
+            
+            // Close all other employee cards first
+            const allCards = document.querySelectorAll('.employee-card');
+            allCards.forEach(card => {
+                card.classList.remove('expanded');
+            });
+            
+            // If the clicked card wasn't expanded, expand it
+            if (!isCurrentlyExpanded) {
+                this.classList.add('expanded');
+            }
         });
         
         cardsGrid.appendChild(card);
     });
 
     updatePaginationInfo(data.length, 'employees');
+}
+
+// Helper function to get the week start (Monday) for a given date
+function getWeekStart(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    return new Date(d.setDate(diff));
+}
+
+// Helper function to check if two dates are in the same week (Monday to Sunday)
+function isSameWeek(date1, date2) {
+    const week1 = getWeekStart(date1);
+    const week2 = getWeekStart(date2);
+    return week1.getTime() === week2.getTime();
+}
+
+// Helper function to check if employee already has a leave in the same week
+function hasLeaveInSameWeek(employee, newDate) {
+    if (!employee.leaveDates || employee.leaveDates.length === 0) {
+        return false;
+    }
+    
+    return employee.leaveDates.some(existingDate => {
+        return isSameWeek(new Date(existingDate), new Date(newDate));
+    });
+}
+
+// Function to validate leave date in real-time
+function validateLeaveDate(employeeId, selectedDate) {
+    const employee = employees.find(emp => emp._id === employeeId);
+    const addButton = document.getElementById(`add-leave-btn-${employeeId}`);
+    const dateInput = document.getElementById(`leave-date-input-${employeeId}`);
+    const validationMsg = document.getElementById(`validation-msg-${employeeId}`);
+    
+    if (!selectedDate) {
+        // Clear validation message and enable button
+        validationMsg.className = 'validation-message';
+        validationMsg.textContent = '';
+        addButton.disabled = false;
+        dateInput.classList.remove('error');
+        return;
+    }
+    
+    if (!employee) {
+        showNotification('Employee not found', 'error');
+        addButton.disabled = true;
+        dateInput.classList.add('error');
+        validationMsg.className = 'validation-message';
+        validationMsg.textContent = '';
+        return;
+    }
+    
+    // Check if employee already has a leave in the same week
+    if (hasLeaveInSameWeek(employee, selectedDate)) {
+        // Show temporary notification instead of persistent validation message
+        showNotification('This employee already has a leave scheduled for this week.', 'warning');
+        addButton.disabled = true;
+        dateInput.classList.add('error');
+        // Clear any existing validation message
+        validationMsg.className = 'validation-message';
+        validationMsg.textContent = '';
+        return;
+    }
+    
+    // Check if date is at least 15 days ahead from today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const minDate = new Date();
+    minDate.setDate(today.getDate() + 15); // 15 days minimum
+    minDate.setHours(0, 0, 0, 0);
+    const selectedDateObj = new Date(selectedDate);
+    selectedDateObj.setHours(0, 0, 0, 0); // Normalize selected date to start of day
+    
+    if (selectedDateObj < minDate) {
+        showNotification('Leave dates must be scheduled at least 15 days in advance.', 'warning');
+        addButton.disabled = true;
+        dateInput.classList.add('error');
+        validationMsg.className = 'validation-message';
+        validationMsg.textContent = '';
+        return;
+    }
+    
+    // Check if date is already scheduled
+    const existingDates = employee.leaveDates.map(date => date.toISOString().split('T')[0]);
+    if (existingDates.includes(selectedDate)) {
+        showNotification('This date is already scheduled as a leave date.', 'warning');
+        addButton.disabled = true;
+        dateInput.classList.add('error');
+        validationMsg.className = 'validation-message';
+        validationMsg.textContent = '';
+        return;
+    }
+    
+    // All validations passed
+    validationMsg.className = 'validation-message success';
+    validationMsg.textContent = 'Date is valid and available.';
+    addButton.disabled = false;
+    dateInput.classList.remove('error');
+}
+
+// Leave Date Management Functions
+async function addLeaveDate(employeeId) {
+    const dateInput = document.getElementById(`leave-date-input-${employeeId}`);
+    const selectedDate = dateInput.value;
+    
+    if (!selectedDate) {
+        showNotification('Please select a date', 'warning');
+        return;
+    }
+    
+    // Find the employee in the current employees array
+    const employee = employees.find(emp => emp._id === employeeId);
+    if (!employee) {
+        showNotification('Employee not found', 'error');
+        return;
+    }
+    
+    // Frontend validation: Check if employee already has a leave in the same week
+    if (hasLeaveInSameWeek(employee, selectedDate)) {
+        showNotification('This employee already has a leave scheduled for this week.', 'warning');
+        return;
+    }
+    
+    console.log('Adding leave date for employee:', employeeId);
+    console.log('Selected date:', selectedDate);
+    console.log('API URL:', `${API_BASE_URL}/employees/${employeeId}/leave-dates`);
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/employees/${employeeId}/leave-dates`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAuthToken()}`
+            },
+            body: JSON.stringify({
+                leaveDates: [selectedDate]
+            })
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
+        if (response.status === 401) {
+            handleExpiredToken();
+            return;
+        }
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (data.success) {
+            showNotification(data.message, 'success');
+            // Refresh the employee list to show updated leave dates
+            await fetchEmployees();
+            // Clear the input and validation message
+            dateInput.value = '';
+            const validationMsg = document.getElementById(`validation-msg-${employeeId}`);
+            if (validationMsg) {
+                validationMsg.className = 'validation-message';
+                validationMsg.textContent = '';
+            }
+        } else {
+            showNotification(data.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error adding leave date:', error);
+        showNotification('Error adding leave date: ' + error.message, 'error');
+    }
+}
+
+async function removeLeaveDate(employeeId, dateToRemove) {
+    console.log('Removing leave date for employee:', employeeId);
+    console.log('Date to remove:', dateToRemove);
+    console.log('API URL:', `${API_BASE_URL}/employees/${employeeId}/leave-dates`);
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/employees/${employeeId}/leave-dates`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${getAuthToken()}`
+            },
+            body: JSON.stringify({
+                leaveDates: [dateToRemove]
+            })
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
+        if (response.status === 401) {
+            handleExpiredToken();
+            return;
+        }
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Response data:', data);
+        
+        if (data.success) {
+            showNotification(data.message, 'success');
+            // Refresh the employee list to show updated leave dates
+            await fetchEmployees();
+        } else {
+            showNotification(data.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error removing leave date:', error);
+        showNotification('Error removing leave date: ' + error.message, 'error');
+    }
 }
 
 function populateUserTable(data = users) {
@@ -474,7 +748,7 @@ function populateReservationTable(data = reservations) {
             <td>${reservation.mobileNumber || 'N/A'}</td>
             <td>${reservation.email || 'N/A'}</td>
             <td>${mapSpecialtyToReadable(reservation.service) || 'N/A'}</td>
-            <td>${reservation.stylistName || reservation.selectedEmployee || 'N/A'}</td>
+            <td>${reservation.stylistName || reservation.selectedEmployee || '<span style="color: #ff9800; font-style: italic;">Unassigned</span>'}</td>
             <td>${reservation.clientNotes ? `<span class="notes-badge" onclick="showNotesModal('${reservation.clientNotes.replace(/'/g, "\\'")}')" title="Click to view full notes">${reservation.clientNotes.length > 30 ? reservation.clientNotes.substring(0, 30) + '...' : reservation.clientNotes}</span>` : 'No notes'}</td>
             <td><span class="price-badge">₱${reservation.totalAmount || 'N/A'}</span></td>
             <td>${getServiceDuration(reservation.service) || 'N/A'}</td>

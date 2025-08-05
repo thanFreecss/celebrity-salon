@@ -104,13 +104,15 @@ router.post('/', [
 
         // Create booking
         console.log('Creating booking with user:', user ? user._id : 'No user (anonymous)');
+        console.log('Employee selection:', selectedEmployee || 'No employee selected (will be assigned by salon)');
+        
         const booking = await Booking.create({
             user: user ? user._id : null, // Use authenticated user if available
             fullName,
             mobileNumber,
             email,
             service,
-            selectedEmployee,
+            selectedEmployee: selectedEmployee || null, // Explicitly set to null if empty
             appointmentDate: new Date(appointmentDate),
             selectedTime,
             clientNotes,

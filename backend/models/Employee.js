@@ -29,6 +29,10 @@ const employeeSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    leaveDates: [{
+        type: Date,
+        default: []
+    }],
     createdAt: {
         type: Date,
         default: Date.now

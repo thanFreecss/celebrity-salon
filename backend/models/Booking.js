@@ -86,14 +86,29 @@ const bookingSchema = new mongoose.Schema({
 bookingSchema.pre('save', async function(next) {
     if (this.isNew && !this.bookingId) {
         try {
-            // Get the next sequence number
-            const counter = await Counter.findOneAndUpdate(
-                { name: 'bookingId' },
-                { $inc: { sequence: 1 } },
-                { new: true, upsert: true }
-            );
+            // Find the lowest available booking ID
+            const existingBookingIds = await this.constructor.find({}, 'bookingId')
+                .sort({ bookingId: 1 })
+                .lean();
             
-            this.bookingId = counter.sequence;
+            let nextBookingId = 1;
+            
+            // Check for gaps in booking IDs starting from 1
+            for (const booking of existingBookingIds) {
+                if (booking.bookingId === nextBookingId) {
+                    nextBookingId++;
+                } else {
+                    // Found a gap, use this ID
+                    break;
+                }
+            }
+            
+            // If no gaps found, use the next number after the highest existing ID
+            if (existingBookingIds.length > 0 && nextBookingId > existingBookingIds[existingBookingIds.length - 1].bookingId) {
+                nextBookingId = existingBookingIds[existingBookingIds.length - 1].bookingId + 1;
+            }
+            
+            this.bookingId = nextBookingId;
             next();
         } catch (error) {
             next(error);

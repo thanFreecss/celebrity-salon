@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Leave Date Validation Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Leave Date Validation Test</h1>
+    
+    <div class="test-section">
+        <h2>Week Calculation Test</h2>
+        <p>Testing the week calculation logic (Monday to Sunday):</p>
+        <button onclick="testWeekCalculation()">Test Week Calculation</button>
+        <div id="week-test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Same Week Detection Test</h2>
+        <p>Testing if two dates are in the same week:</p>
+        <button onclick="testSameWeekDetection()">Test Same Week Detection</button>
+        <div id="same-week-test-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Leave Validation Test</h2>
+        <p>Testing the complete leave validation logic:</p>
+        <button onclick="testLeaveValidation()">Test Leave Validation</button>
+        <div id="leave-validation-test-result"></div>
+    </div>
+
+    <script>
+        // Helper function to get the week start (Monday) for a given date
+        function getWeekStart(date) {
+            const d = new Date(date);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+            return new Date(d.setDate(diff));
+        }
+
+        // Helper function to check if two dates are in the same week (Monday to Sunday)
+        function isSameWeek(date1, date2) {
+            const week1 = getWeekStart(date1);
+            const week2 = getWeekStart(date2);
+            return week1.getTime() === week2.getTime();
+        }
+
+        // Helper function to check if employee already has a leave in the same week
+        function hasLeaveInSameWeek(leaveDates, newDate) {
+            if (!leaveDates || leaveDates.length === 0) {
+                return false;
+            }
+            
+            return leaveDates.some(existingDate => {
+                return isSameWeek(new Date(existingDate), new Date(newDate));
+            });
+        }
+
+        function testWeekCalculation() {
+            const resultDiv = document.getElementById('week-test-result');
+            const testDates = [
+                new Date('2025-08-04'), // Monday
+                new Date('2025-08-05'), // Tuesday
+                new Date('2025-08-06'), // Wednesday
+                new Date('2025-08-07'), // Thursday
+                new Date('2025-08-08'), // Friday
+                new Date('2025-08-09'), // Saturday
+                new Date('2025-08-10'), // Sunday
+            ];
+            
+            let result = '<h3>Week Start Results:</h3>';
+            testDates.forEach(date => {
+                const weekStart = getWeekStart(date);
+                const dayName = date.toLocaleDateString('en-US', { weekday: 'long' });
+                result += `<p><strong>${dayName} (${date.toDateString()})</strong> → Week starts: <strong>${weekStart.toDateString()}</strong></p>`;
+            });
+            
+            resultDiv.innerHTML = result;
+            resultDiv.className = 'test-result success';
+        }
+
+        function testSameWeekDetection() {
+            const resultDiv = document.getElementById('same-week-test-result');
+            
+            const testCases = [
+                {
+                    date1: '2025-08-04', // Monday
+                    date2: '2025-08-06', // Wednesday
+                    expected: true,
+                    description: 'Monday and Wednesday in same week'
+                },
+                {
+                    date1: '2025-08-04', // Monday
+                    date2: '2025-08-10', // Sunday
+                    expected: true,
+                    description: 'Monday and Sunday in same week'
+                },
+                {
+                    date1: '2025-08-04', // Monday
+                    date2: '2025-08-11', // Next Monday
+                    expected: false,
+                    description: 'Monday and next Monday in different weeks'
+                },
+                {
+                    date1: '2025-08-10', // Sunday
+                    date2: '2025-08-11', // Next Monday
+                    expected: false,
+                    description: 'Sunday and next Monday in different weeks'
+                }
+            ];
+            
+            let result = '<h3>Same Week Detection Results:</h3>';
+            let allPassed = true;
+            
+            testCases.forEach(testCase => {
+                const isSame = isSameWeek(new Date(testCase.date1), new Date(testCase.date2));
+                const passed = isSame === testCase.expected;
+                if (!passed) allPassed = false;
+                
+                result += `<p class="${passed ? 'success' : 'error'}">
+                    <strong>${testCase.description}:</strong> 
+                    ${testCase.date1} and ${testCase.date2} → 
+                    ${isSame ? 'Same week' : 'Different weeks'} 
+                    (Expected: ${testCase.expected ? 'Same week' : 'Different weeks'})
+                    ${passed ? '✅' : '❌'}
+                </p>`;
+            });
+            
+            resultDiv.innerHTML = result;
+            resultDiv.className = `test-result ${allPassed ? 'success' : 'error'}`;
+        }
+
+        function testLeaveValidation() {
+            const resultDiv = document.getElementById('leave-validation-test-result');
+            
+            // Mock employee with existing leave dates
+            const employee = {
+                leaveDates: [
+                    '2025-08-05', // Tuesday
+                    '2025-08-12', // Next Tuesday
+                ]
+            };
+            
+            const testCases = [
+                {
+                    newDate: '2025-08-06', // Wednesday (same week as Aug 5)
+                    expected: true, // Should conflict
+                    description: 'Adding Wednesday when Tuesday is already scheduled (same week)'
+                },
+                {
+                    newDate: '2025-08-13', // Next Wednesday (same week as Aug 12)
+                    expected: true, // Should conflict
+                    description: 'Adding next Wednesday when next Tuesday is already scheduled (same week)'
+                },
+                {
+                    newDate: '2025-08-19', // Tuesday in different week
+                    expected: false, // Should not conflict
+                    description: 'Adding Tuesday in different week (no conflict)'
+                },
+                {
+                    newDate: '2025-08-05', // Same date
+                    expected: true, // Should conflict (duplicate)
+                    description: 'Adding same date that already exists'
+                }
+            ];
+            
+            let result = '<h3>Leave Validation Results:</h3>';
+            let allPassed = true;
+            
+            testCases.forEach(testCase => {
+                const hasConflict = hasLeaveInSameWeek(employee.leaveDates, testCase.newDate);
+                const passed = hasConflict === testCase.expected;
+                if (!passed) allPassed = false;
+                
+                result += `<p class="${passed ? 'success' : 'error'}">
+                    <strong>${testCase.description}:</strong> 
+                    Adding ${testCase.newDate} → 
+                    ${hasConflict ? 'Conflict detected' : 'No conflict'} 
+                    (Expected: ${testCase.expected ? 'Conflict' : 'No conflict'})
+                    ${passed ? '✅' : '❌'}
+                </p>`;
+            });
+            
+            result += `<p><strong>Existing leave dates:</strong> ${employee.leaveDates.join(', ')}</p>`;
+            
+            resultDiv.innerHTML = result;
+            resultDiv.className = `test-result ${allPassed ? 'success' : 'error'}`;
+        }
+    </script>
+</body>
+</html> 
