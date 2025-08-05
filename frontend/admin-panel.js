@@ -1245,15 +1245,43 @@ async function completeReservation(id) {
 async function testServerConnection() {
     try {
         console.log('🔍 Testing server connection to:', `${API_BASE_URL}/test`);
-        const response = await fetch(`${API_BASE_URL}/test`);
+        console.log('🔍 API_BASE_URL:', API_BASE_URL);
+        
+        const response = await fetch(`${API_BASE_URL}/test`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            // Add timeout
+            signal: AbortSignal.timeout(10000) // 10 second timeout
+        });
+        
         console.log('🔍 Test response status:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
         console.log('🔍 Server test response:', data);
         showNotification('Server connection successful!', 'success');
         return true;
     } catch (error) {
         console.error('🔍 Server connection test failed:', error);
-        showNotification('Server connection failed: ' + error.message, 'error');
+        
+        // Provide more specific error messages
+        let errorMessage = 'Server connection failed';
+        if (error.name === 'AbortError') {
+            errorMessage = 'Server connection timeout - server may be down';
+        } else if (error.message.includes('404')) {
+            errorMessage = 'Server endpoint not found - check deployment';
+        } else if (error.message.includes('fetch')) {
+            errorMessage = 'Network error - check internet connection';
+        } else {
+            errorMessage = error.message;
+        }
+        
+        showNotification(errorMessage, 'error');
         return false;
     }
 }
@@ -1262,14 +1290,36 @@ async function testServerConnection() {
 async function testBeforeAfterRoute() {
     try {
         console.log('🔍 Testing before-after route:', `${API_BASE_URL}/before-after/test`);
-        const response = await fetch(`${API_BASE_URL}/before-after/test`);
+        const response = await fetch(`${API_BASE_URL}/before-after/test`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            signal: AbortSignal.timeout(10000)
+        });
+        
         console.log('🔍 Before-after test response status:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const data = await response.json();
         console.log('🔍 Before-after route test:', data);
         showNotification('Before-after route test successful', 'success');
     } catch (error) {
         console.error('🔍 Before-after route test failed:', error);
-        showNotification('Before-after route test failed', 'error');
+        
+        let errorMessage = 'Before-after route test failed';
+        if (error.name === 'AbortError') {
+            errorMessage = 'Before-after route timeout';
+        } else if (error.message.includes('404')) {
+            errorMessage = 'Before-after endpoint not found';
+        } else {
+            errorMessage = error.message;
+        }
+        
+        showNotification(errorMessage, 'error');
     }
 }
 
@@ -1280,39 +1330,51 @@ function initializeAdminPanel() {
         return; // Will redirect to admin login
     }
     
-    // Test server connection first
+    // Test server connection first, but don't block initialization
     testServerConnection().then(connected => {
         if (connected) {
-            // Setup search functionality
-            setupSearchFunctionality();
-            
-            // Setup navigation event listeners
-            document.querySelector('a[href="#employees"]').addEventListener('click', function(e) {
-                e.preventDefault();
-                showEmployees();
-            });
-
-            document.querySelector('a[href="#users"]').addEventListener('click', function(e) {
-                e.preventDefault();
-                showUsers();
-            });
-
-            document.querySelector('a[href="#reservation"]').addEventListener('click', function(e) {
-                e.preventDefault();
-                showReservations();
-            });
-
-            document.querySelector('a[href="#before-after"]').addEventListener('click', function(e) {
-                e.preventDefault();
-                showBeforeAfter();
-            });
-
-            // Setup other event listeners
-            setupEventListeners();
-            
-            // Show employees section by default and fetch data
-            showEmployees();
+            console.log('🔍 Server connection successful - proceeding with full initialization');
+        } else {
+            console.log('🔍 Server connection failed - proceeding with limited functionality');
+            showNotification('Server connection failed - some features may not work properly', 'warning');
         }
+        
+        // Always proceed with initialization regardless of server test result
+        // Setup search functionality
+        setupSearchFunctionality();
+        
+        // Setup navigation event listeners
+        document.querySelector('a[href="#employees"]').addEventListener('click', function(e) {
+            e.preventDefault();
+            showEmployees();
+        });
+
+        document.querySelector('a[href="#users"]').addEventListener('click', function(e) {
+            e.preventDefault();
+            showUsers();
+        });
+
+        document.querySelector('a[href="#reservation"]').addEventListener('click', function(e) {
+            e.preventDefault();
+            showReservations();
+        });
+
+        document.querySelector('a[href="#before-after"]').addEventListener('click', function(e) {
+            e.preventDefault();
+            showBeforeAfter();
+        });
+
+        // Setup other event listeners
+        setupEventListeners();
+        
+        // Show employees section by default and fetch data
+        showEmployees();
+    }).catch(error => {
+        console.error('🔍 Server test error:', error);
+        // Still proceed with initialization even if test fails
+        setupSearchFunctionality();
+        setupEventListeners();
+        showEmployees();
     });
 }
 

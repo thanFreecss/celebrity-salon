@@ -20,10 +20,8 @@ const config = {
         }
         // In production, use the deployed backend URL
         console.log('🔧 Config.js - Using production backend');
-        // Try the main domain first, then fallback to backend-specific domain
-        const backendUrl = window.location.hostname === 'celebrity-styles.onrender.com' 
-            ? 'https://celebrity-styles.onrender.com/api'
-            : 'https://celebrity-styles-backend.onrender.com/api';
+        // Use the backend-specific domain since the main domain doesn't have the API
+        const backendUrl = 'https://celebrity-styles-backend.onrender.com/api';
         console.log('🔧 Config.js - Backend URL:', backendUrl);
         return backendUrl;
     },
