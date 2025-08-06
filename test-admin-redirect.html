@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Admin Login Redirect</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .form-group { margin: 10px 0; }
+        input { padding: 8px; width: 200px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        #result { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>Test Admin Login Redirect</h1>
+    <form id="testForm">
+        <div class="form-group">
+            <label>Email:</label><br>
+            <input type="email" id="email" value="admin@celebritystyles.com">
+        </div>
+        <div class="form-group">
+            <label>Password:</label><br>
+            <input type="password" id="password" value="admin123">
+        </div>
+        <button type="submit">Test Login & Redirect</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('testForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            console.log('🔐 Form submitted, preventing default');
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            console.log('🔐 Testing login with:', { email });
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                console.log('🔐 Login response:', data);
+                
+                if (data.success && data.data.role === 'admin') {
+                    console.log('🔐 Admin login successful, redirecting...');
+                    
+                    // Store data
+                    localStorage.setItem('userToken', data.data.token);
+                    localStorage.setItem('userData', JSON.stringify(data.data));
+                    
+                    // Show result
+                    document.getElementById('result').innerHTML = `
+                        <h3>✅ Login Successful!</h3>
+                        <p>Role: ${data.data.role}</p>
+                        <p>Name: ${data.data.name}</p>
+                        <p>Redirecting to admin-panel.html...</p>
+                    `;
+                    
+                    // Redirect
+                    console.log('🔐 Redirecting to admin-panel.html');
+                    setTimeout(() => {
+                        window.location.href = 'admin-panel.html';
+                    }, 2000);
+                    
+                } else {
+                    document.getElementById('result').innerHTML = `
+                        <h3>❌ Login Failed</h3>
+                        <p>Message: ${data.message || 'Unknown error'}</p>
+                        <p>Role: ${data.data?.role || 'N/A'}</p>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('🔐 Error:', error);
+                document.getElementById('result').innerHTML = `
+                    <h3>❌ Error</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html> 

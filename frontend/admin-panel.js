@@ -938,7 +938,8 @@ function getAuthToken() {
     console.log('Debug - adminToken from sessionStorage:', sessionToken);
     console.log('Debug - userToken from localStorage:', userToken);
     
-    const token = adminToken || sessionToken;
+    // Use userToken if adminToken is not available (for admin users)
+    const token = adminToken || sessionToken || userToken;
     console.log('Debug - Final token being used:', token);
     
     return token;
@@ -954,32 +955,44 @@ function checkAdminAuth() {
     console.log('Debug - checkAdminAuth - adminData:', adminData);
     console.log('Debug - checkAdminAuth - userData:', userData);
     
-    if (!token || !adminData) {
-        console.log('Debug - No token or adminData found, redirecting to admin login');
+    // Check if we have either adminData or userData
+    if (!token || (!adminData && !userData)) {
+        console.log('Debug - No token or user data found, redirecting to admin login');
         // Redirect to admin login
         window.location.href = 'admin-login.html';
         return false;
     }
     
     try {
-        const parsedAdminData = JSON.parse(adminData);
-        console.log('Debug - Parsed adminData:', parsedAdminData);
+        // Try to parse adminData first, then userData
+        let userInfo = null;
+        if (adminData) {
+            userInfo = JSON.parse(adminData);
+        } else if (userData) {
+            userInfo = JSON.parse(userData);
+        }
         
-        if (parsedAdminData.role !== 'admin') {
+        console.log('Debug - Parsed user info:', userInfo);
+        
+        if (!userInfo || userInfo.role !== 'admin') {
             console.log('Debug - User is not admin, redirecting');
             // Not an admin, redirect to admin login
             localStorage.removeItem('adminToken');
             localStorage.removeItem('adminData');
+            localStorage.removeItem('userToken');
+            localStorage.removeItem('userData');
             window.location.href = 'admin-login.html';
             return false;
         }
         console.log('Debug - Admin authentication successful');
         return true;
     } catch (error) {
-        console.log('Debug - Error parsing adminData:', error);
+        console.log('Debug - Error parsing user data:', error);
         // Invalid data, redirect to admin login
         localStorage.removeItem('adminToken');
         localStorage.removeItem('adminData');
+        localStorage.removeItem('userToken');
+        localStorage.removeItem('userData');
         window.location.href = 'admin-login.html';
         return false;
     }

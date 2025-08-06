@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Admin Panel Access</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Test Admin Panel Access</h1>
+    
+    <div id="status"></div>
+    
+    <button onclick="checkAuth()">Check Authentication</button>
+    <button onclick="loginAdmin()">Login as Admin</button>
+    <button onclick="goToAdminPanel()">Go to Admin Panel</button>
+    <button onclick="clearStorage()">Clear Storage</button>
+    
+    <div id="debug"></div>
+
+    <script src="config.js"></script>
+    <script>
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        function addDebug(message) {
+            const debugDiv = document.getElementById('debug');
+            debugDiv.innerHTML += `<p>${new Date().toLocaleTimeString()}: ${message}</p>`;
+        }
+        
+        function checkAuth() {
+            addDebug('Checking authentication...');
+            
+            const userToken = localStorage.getItem('userToken');
+            const userData = localStorage.getItem('userData');
+            const adminToken = localStorage.getItem('adminToken');
+            const adminData = localStorage.getItem('adminData');
+            
+            addDebug(`userToken: ${userToken ? 'Present' : 'Missing'}`);
+            addDebug(`userData: ${userData ? 'Present' : 'Missing'}`);
+            addDebug(`adminToken: ${adminToken ? 'Present' : 'Missing'}`);
+            addDebug(`adminData: ${adminData ? 'Present' : 'Missing'}`);
+            
+            if (userData) {
+                try {
+                    const user = JSON.parse(userData);
+                    addDebug(`User role: ${user.role}`);
+                    addDebug(`User name: ${user.name}`);
+                    
+                    if (user.role === 'admin') {
+                        showStatus('✅ Admin authentication found!', 'success');
+                    } else {
+                        showStatus('❌ User is not admin', 'error');
+                    }
+                } catch (e) {
+                    addDebug(`Error parsing userData: ${e.message}`);
+                    showStatus('❌ Invalid user data', 'error');
+                }
+            } else {
+                showStatus('❌ No authentication found', 'error');
+            }
+        }
+        
+        async function loginAdmin() {
+            addDebug('Logging in as admin...');
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@celebritystyles.com',
+                        password: 'admin123'
+                    })
+                });
+                
+                const data = await response.json();
+                addDebug(`Login response: ${JSON.stringify(data)}`);
+                
+                if (data.success && data.data.role === 'admin') {
+                    localStorage.setItem('userToken', data.data.token);
+                    localStorage.setItem('userData', JSON.stringify(data.data));
+                    showStatus('✅ Admin login successful!', 'success');
+                    addDebug('Admin data stored in localStorage');
+                } else {
+                    showStatus('❌ Login failed', 'error');
+                }
+            } catch (error) {
+                addDebug(`Login error: ${error.message}`);
+                showStatus('❌ Login error', 'error');
+            }
+        }
+        
+        function goToAdminPanel() {
+            addDebug('Attempting to access admin panel...');
+            window.location.href = 'admin-panel.html';
+        }
+        
+        function clearStorage() {
+            localStorage.removeItem('userToken');
+            localStorage.removeItem('userData');
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminData');
+            addDebug('Storage cleared');
+            showStatus('Storage cleared', 'info');
+        }
+        
+        // Check auth on page load
+        window.onload = function() {
+            addDebug('Page loaded');
+            checkAuth();
+        };
+    </script>
+</body>
+</html> 

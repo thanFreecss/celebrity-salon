@@ -279,6 +279,7 @@
         document.head.appendChild(style);
 
         document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
+            console.log('🔐 Form submitted, preventing default');
             e.preventDefault();
             
             const formData = new FormData(this);
@@ -287,10 +288,13 @@
                 password: formData.get('password')
             };
             
+            console.log('🔐 Admin login attempt:', { email: loginData.email });
+            console.log('🔐 API URL:', `${API_BASE_URL}/auth/login`);
+            
             try {
                 // Show loading state
                 const submitBtn = this.querySelector('.button');
-                submitBtn.textContent = 'Logging In...';
+                submitBtn.querySelector('.text').textContent = 'Logging In...';
                 submitBtn.disabled = true;
                 
                 const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -302,24 +306,32 @@
                 });
                 
                 const data = await response.json();
+                console.log('🔐 Login response:', data);
                 
                 if (data.success) {
                     // Check if user is admin
                     if (data.data.role === 'admin') {
-                        showNotification('Admin login successful!', 'success');
+                        console.log('🔐 Admin login successful, redirecting...');
+                        showNotification('Admin login successful! Redirecting...', 'success');
                         
                         // Store admin data in localStorage
                         localStorage.setItem('userToken', data.data.token);
                         localStorage.setItem('userData', JSON.stringify(data.data));
                         
-                        // Redirect to admin panel
-                        setTimeout(() => {
+                        // Redirect to admin panel immediately
+                        console.log('🔐 Redirecting to admin-panel.html');
+                        try {
                             window.location.href = 'admin-panel.html';
-                        }, 1000);
+                        } catch (redirectError) {
+                            console.error('🔐 Redirect failed, trying alternative method:', redirectError);
+                            window.location.replace('admin-panel.html');
+                        }
                     } else {
+                        console.log('🔐 Access denied - user is not admin');
                         showNotification('Access denied: This login is for administrators only.', 'error');
                     }
                 } else {
+                    console.log('🔐 Login failed:', data.message);
                     showNotification(data.message || 'Login failed', 'error');
                 }
             } catch (error) {
@@ -328,7 +340,7 @@
             } finally {
                 // Reset button state
                 const submitBtn = this.querySelector('.button');
-                submitBtn.textContent = 'Login to Admin Panel';
+                submitBtn.querySelector('.text').textContent = 'Login to Admin Panel';
                 submitBtn.disabled = false;
             }
         });
