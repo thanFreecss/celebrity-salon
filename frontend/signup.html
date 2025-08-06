@@ -292,9 +292,9 @@
             
             try {
                 // Show loading state
-                const submitBtn = this.querySelector('.submit-btn');
-                const originalText = submitBtn.textContent;
-                submitBtn.textContent = 'Creating Account...';
+                const submitBtn = this.querySelector('.button');
+                const originalText = submitBtn.querySelector('.text').textContent;
+                submitBtn.querySelector('.text').textContent = 'Creating Account...';
                 submitBtn.disabled = true;
                 
                 const response = await fetch(`${API_BASE_URL}/auth/register`, {
@@ -332,8 +332,8 @@
                 showNotification('Error connecting to server', 'error');
             } finally {
                 // Reset button state
-                const submitBtn = this.querySelector('.submit-btn');
-                submitBtn.textContent = 'Sign Up';
+                const submitBtn = this.querySelector('.button');
+                submitBtn.querySelector('.text').textContent = 'Sign Up';
                 submitBtn.disabled = false;
             }
         });

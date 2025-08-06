@@ -309,15 +309,15 @@
                         showNotification('Admin login successful!', 'success');
                         
                         // Store admin data in localStorage
-                        localStorage.setItem('adminToken', data.data.token);
-                        localStorage.setItem('adminData', JSON.stringify(data.data));
+                        localStorage.setItem('userToken', data.data.token);
+                        localStorage.setItem('userData', JSON.stringify(data.data));
                         
                         // Redirect to admin panel
                         setTimeout(() => {
                             window.location.href = 'admin-panel.html';
                         }, 1000);
                     } else {
-                        showNotification('Access denied. Admin privileges required.', 'error');
+                        showNotification('Access denied: This login is for administrators only.', 'error');
                     }
                 } else {
                     showNotification(data.message || 'Login failed', 'error');
