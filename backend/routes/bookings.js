@@ -252,11 +252,182 @@ router.get('/:id', protect, async (req, res) => {
     }
 });
 
+// @route   PUT /api/bookings/:id/cancel
+// @desc    Cancel a booking (user can only cancel their own bookings)
+// @access  Private
+router.put('/:id/cancel', protect, async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id);
+
+        if (!booking) {
+            return res.status(404).json({
+                success: false,
+                message: 'Booking not found'
+            });
+        }
+
+        // Check if the booking belongs to the current user
+        if (booking.user && booking.user.toString() !== req.user.id) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized to cancel this booking'
+            });
+        }
+
+        // Check if booking can be cancelled (only pending or confirmed bookings)
+        if (!['pending', 'confirmed'].includes(booking.status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'This booking cannot be cancelled'
+            });
+        }
+
+        booking.status = 'cancelled';
+        booking.updatedAt = Date.now();
+
+        await booking.save();
+
+        res.json({
+            success: true,
+            message: 'Booking cancelled successfully',
+            data: booking
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+});
+
+// @route   PUT /api/bookings/:id/reschedule
+// @desc    Reschedule a booking (user can only reschedule their own bookings)
+// @access  Private
+router.put('/:id/reschedule', protect, [
+    body('appointmentDate').isISO8601().withMessage('Please provide a valid date'),
+    body('selectedTime').isIn(['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00']).withMessage('Please select a valid time slot'),
+    body('selectedEmployee').optional(),
+    body('clientNotes').optional()
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                errors: errors.array()
+            });
+        }
+
+        const booking = await Booking.findById(req.params.id);
+
+        if (!booking) {
+            return res.status(404).json({
+                success: false,
+                message: 'Booking not found'
+            });
+        }
+
+        // Check if the booking belongs to the current user
+        if (booking.user && booking.user.toString() !== req.user.id) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized to reschedule this booking'
+            });
+        }
+
+        // Check if booking can be rescheduled (pending, confirmed, or cancelled bookings)
+        if (!['pending', 'confirmed', 'cancelled'].includes(booking.status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'This booking cannot be rescheduled'
+            });
+        }
+
+        const { appointmentDate, selectedTime, selectedEmployee, clientNotes } = req.body;
+
+        // Validate appointment date is not in the past
+        const appointmentDateTime = new Date(appointmentDate);
+        const now = new Date();
+        
+        if (appointmentDateTime < now) {
+            return res.status(400).json({
+                success: false,
+                message: 'Appointment date cannot be in the past.'
+            });
+        }
+
+        // Check if the new time slot is available (excluding the current booking)
+        const existingBooking = await Booking.findOne({
+            _id: { $ne: booking._id }, // Exclude current booking
+            appointmentDate: new Date(appointmentDate),
+            selectedTime,
+            status: { $in: ['pending', 'confirmed'] }
+        });
+
+        if (existingBooking) {
+            return res.status(400).json({
+                success: false,
+                message: 'This time slot is already booked. Please select another time.'
+            });
+        }
+
+        // Store old booking details for email
+        const oldBookingDetails = {
+            appointmentDate: booking.appointmentDate,
+            selectedTime: booking.selectedTime,
+            selectedEmployee: booking.selectedEmployee
+        };
+
+        // Update booking with new details
+        booking.appointmentDate = new Date(appointmentDate);
+        booking.selectedTime = selectedTime;
+        booking.selectedEmployee = selectedEmployee || booking.selectedEmployee;
+        booking.clientNotes = clientNotes || booking.clientNotes;
+        booking.status = 'pending'; // Reset to pending for admin approval
+        booking.updatedAt = Date.now();
+
+        await booking.save();
+
+        // Send reschedule email
+        const { sendBookingReschedule } = require('../utils/emailService');
+        const emailData = {
+            fullName: booking.fullName,
+            email: booking.email,
+            service: booking.service,
+            oldAppointmentDate: oldBookingDetails.appointmentDate,
+            oldSelectedTime: oldBookingDetails.selectedTime,
+            newAppointmentDate: booking.appointmentDate,
+            newSelectedTime: booking.selectedTime,
+            totalAmount: booking.totalAmount
+        };
+
+        try {
+            await sendBookingReschedule(emailData);
+            console.log('Reschedule email sent successfully to:', booking.email);
+        } catch (emailError) {
+            console.error('Failed to send reschedule email:', emailError);
+        }
+
+        res.json({
+            success: true,
+            message: 'Booking rescheduled successfully. It is now pending admin approval.',
+            data: booking
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+});
+
 // @route   PUT /api/bookings/:id
 // @desc    Update booking status
 // @access  Private
 router.put('/:id', protect, [
-    body('status').isIn(['pending', 'confirmed', 'completed', 'cancelled']).withMessage('Invalid status')
+    body('status').isIn(['pending', 'confirmed', 'completed', 'cancelled', 'rejected']).withMessage('Invalid status')
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
@@ -314,55 +485,6 @@ router.delete('/:id', protect, async (req, res) => {
         res.json({
             success: true,
             message: 'Booking deleted successfully'
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: 'Server error'
-        });
-    }
-});
-
-// @route   PUT /api/bookings/:id/cancel
-// @desc    Cancel a booking (user can only cancel their own bookings)
-// @access  Private
-router.put('/:id/cancel', protect, async (req, res) => {
-    try {
-        const booking = await Booking.findById(req.params.id);
-
-        if (!booking) {
-            return res.status(404).json({
-                success: false,
-                message: 'Booking not found'
-            });
-        }
-
-        // Check if the booking belongs to the current user
-        if (booking.user && booking.user.toString() !== req.user.id) {
-            return res.status(403).json({
-                success: false,
-                message: 'Not authorized to cancel this booking'
-            });
-        }
-
-        // Check if booking can be cancelled (only pending or confirmed bookings)
-        if (!['pending', 'confirmed'].includes(booking.status)) {
-            return res.status(400).json({
-                success: false,
-                message: 'This booking cannot be cancelled'
-            });
-        }
-
-        booking.status = 'cancelled';
-        booking.updatedAt = Date.now();
-
-        await booking.save();
-
-        res.json({
-            success: true,
-            message: 'Booking cancelled successfully',
-            data: booking
         });
     } catch (error) {
         console.error(error);

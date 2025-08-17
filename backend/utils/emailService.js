@@ -5,7 +5,7 @@ const QRCode = require('qrcode');
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER,
+        user: 'cstyleshairsalon@gmail.com',
         pass: process.env.EMAIL_PASSWORD
     }
 });
@@ -247,11 +247,6 @@ const emailTemplates = {
                                 • Or reschedule your appointment
                             </div>
                             
-                            <div style="text-align: center; margin: 30px 0;">
-                                <h3><span class="emoji">🔁</span>Need to make changes?</h3>
-                                <a href="#" class="reschedule-btn">Reschedule Appointment</a>
-                            </div>
-                            
                             <div class="reminder-section">
                                 <h3><span class="emoji">💡</span>Before Your Appointment:</h3>
                                 <ul class="reminder-list">
@@ -280,7 +275,7 @@ const emailTemplates = {
     },
     
     bookingCancellation: (bookingData) => ({
-        subject: '❌ Booking Cancelled - Celebrity Styles Hair Salon',
+        subject: '❌ Booking Cancelled – Celebrity Styles Hair Salon',
         html: `
             <!DOCTYPE html>
             <html>
@@ -295,64 +290,314 @@ const emailTemplates = {
                         max-width: 600px;
                         margin: 0 auto;
                         padding: 20px;
+                        background-color: #f5f5f5;
+                    }
+                    .container {
+                        background: white;
+                        border-radius: 15px;
+                        overflow: hidden;
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
                     }
                     .header {
-                        background: #f44336;
+                        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
                         color: white;
-                        padding: 30px;
+                        padding: 40px 30px;
                         text-align: center;
-                        border-radius: 10px 10px 0 0;
+                    }
+                    .header h1 {
+                        margin: 0;
+                        font-size: 28px;
+                        font-weight: bold;
+                    }
+                    .header p {
+                        margin: 10px 0 0 0;
+                        font-size: 16px;
+                        opacity: 0.9;
                     }
                     .content {
-                        background: #f9f9f9;
-                        padding: 30px;
-                        border-radius: 0 0 10px 10px;
+                        padding: 40px 30px;
                     }
-                    .booking-details {
-                        background: white;
-                        padding: 20px;
-                        border-radius: 8px;
-                        margin: 20px 0;
-                        border-left: 4px solid #f44336;
+                    .greeting {
+                        font-size: 18px;
+                        margin-bottom: 30px;
+                        color: #333;
+                    }
+                    .cancelled-details {
+                        background: #fff3cd;
+                        padding: 25px;
+                        border-radius: 12px;
+                        margin: 25px 0;
+                        border-left: 5px solid #ffc107;
+                    }
+                    .detail-row {
+                        display: flex;
+                        justify-content: space-between;
+                        margin: 12px 0;
+                        padding: 8px 0;
+                        border-bottom: 1px solid #e9ecef;
+                    }
+                    .detail-row:last-child {
+                        border-bottom: none;
+                    }
+                    .label {
+                        font-weight: bold;
+                        color: #495057;
+                        min-width: 120px;
+                    }
+                    .value {
+                        color: #333;
+                        text-align: right;
+                        flex: 1;
+                    }
+                    .contact-section {
+                        background: #e8f4fd;
+                        padding: 25px;
+                        border-radius: 12px;
+                        margin: 25px 0;
+                        border-left: 5px solid #2196f3;
+                    }
+                    .contact-section h3 {
+                        margin-top: 0;
+                        color: #2196f3;
                     }
                     .footer {
+                        background: #f8f9fa;
+                        padding: 20px 30px;
                         text-align: center;
-                        margin-top: 30px;
-                        padding-top: 20px;
-                        border-top: 1px solid #ddd;
-                        color: #666;
+                        color: #6c757d;
                         font-size: 14px;
                     }
                 </style>
             </head>
             <body>
-                <div class="header">
-                    <h1>❌ Booking Cancelled</h1>
-                    <p>Your appointment has been cancelled</p>
-                </div>
-                
-                <div class="content">
-                    <p>Dear <strong>${bookingData.fullName}</strong>,</p>
-                    
-                    <p>We regret to inform you that your booking has been cancelled.</p>
-                    
-                    <div class="booking-details">
-                        <h3>Cancelled Appointment Details</h3>
-                        <p><strong>Service:</strong> ${bookingData.service}</p>
-                        <p><strong>Date:</strong> ${new Date(bookingData.appointmentDate).toLocaleDateString()}</p>
-                        <p><strong>Time:</strong> ${bookingData.selectedTime}</p>
+                <div class="container">
+                    <div class="header">
+                        <h1>❌ Booking Cancelled</h1>
+                        <p>Your appointment has been cancelled</p>
                     </div>
                     
-                    <p>If you would like to reschedule your appointment, please contact us to book a new time slot.</p>
+                    <div class="content">
+                        <div class="greeting">
+                            Dear <strong>${bookingData.fullName}</strong>,
+                        </div>
+                        
+                        <p>We're sorry to inform you that your booking has been cancelled.</p>
+                        
+                        <div class="cancelled-details">
+                            <h3>📅 Cancelled Appointment Details:</h3>
+                            <div class="detail-row">
+                                <span class="label">Service:</span>
+                                <span class="value">${bookingData.service}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Date:</span>
+                                <span class="value">${new Date(bookingData.appointmentDate).toLocaleDateString()}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Time:</span>
+                                <span class="value">${bookingData.selectedTime}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="contact-section">
+                            <h3>📞 Need to Rebook?</h3>
+                            <p>If you'd like to make a new appointment, please contact us:</p>
+                            <p><strong>Phone:</strong> (0917)-1386-028<br>
+                            <strong>Email:</strong> cstyleshairsalon@gmail.com</p>
+                        </div>
+                        
+                        <p style="text-align: center; font-size: 16px; margin: 30px 0;">
+                            Thank you for choosing Celebrity Styles Hair Salon.<br>
+                            <strong>We hope to see you again soon!</strong>
+                        </p>
+                    </div>
                     
-                    <p>We apologize for any inconvenience this may have caused.</p>
-                    
-                    <p>Best regards,<br>
-                    <strong>The Celebrity Styles Team</strong></p>
+                    <div class="footer">
+                        <p>This is an automated email. Please do not reply to this message.</p>
+                    </div>
                 </div>
-                
-                <div class="footer">
-                    <p>This is an automated email. Please do not reply to this message.</p>
+            </body>
+            </html>
+        `
+    }),
+
+    bookingReschedule: (bookingData) => ({
+        subject: '🔄 Your Booking Has Been Rescheduled – Celebrity Styles Hair Salon',
+        html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <title>Booking Rescheduled</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        line-height: 1.6;
+                        color: #333;
+                        max-width: 600px;
+                        margin: 0 auto;
+                        padding: 20px;
+                        background-color: #f5f5f5;
+                    }
+                    .container {
+                        background: white;
+                        border-radius: 15px;
+                        overflow: hidden;
+                        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                    }
+                    .header {
+                        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                        color: white;
+                        padding: 40px 30px;
+                        text-align: center;
+                    }
+                    .header h1 {
+                        margin: 0;
+                        font-size: 28px;
+                        font-weight: bold;
+                    }
+                    .header p {
+                        margin: 10px 0 0 0;
+                        font-size: 16px;
+                        opacity: 0.9;
+                    }
+                    .content {
+                        padding: 40px 30px;
+                    }
+                    .greeting {
+                        font-size: 18px;
+                        margin-bottom: 30px;
+                        color: #333;
+                    }
+                    .old-details {
+                        background: #fff3cd;
+                        padding: 25px;
+                        border-radius: 12px;
+                        margin: 25px 0;
+                        border-left: 5px solid #ffc107;
+                    }
+                    .new-details {
+                        background: #d4edda;
+                        padding: 25px;
+                        border-radius: 12px;
+                        margin: 25px 0;
+                        border-left: 5px solid #28a745;
+                    }
+                    .detail-row {
+                        display: flex;
+                        justify-content: space-between;
+                        margin: 12px 0;
+                        padding: 8px 0;
+                        border-bottom: 1px solid #e9ecef;
+                    }
+                    .detail-row:last-child {
+                        border-bottom: none;
+                    }
+                    .label {
+                        font-weight: bold;
+                        color: #495057;
+                        min-width: 120px;
+                    }
+                    .value {
+                        color: #333;
+                        text-align: right;
+                        flex: 1;
+                    }
+                    .status-notice {
+                        background: #e8f4fd;
+                        padding: 20px;
+                        border-radius: 12px;
+                        margin: 25px 0;
+                        border-left: 5px solid #2196f3;
+                        text-align: center;
+                    }
+                    .contact-section {
+                        background: #f8f9fa;
+                        padding: 25px;
+                        border-radius: 12px;
+                        margin: 25px 0;
+                        border-left: 5px solid #6c757d;
+                    }
+                    .contact-section h3 {
+                        margin-top: 0;
+                        color: #495057;
+                    }
+                    .footer {
+                        background: #f8f9fa;
+                        padding: 20px 30px;
+                        text-align: center;
+                        color: #6c757d;
+                        font-size: 14px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>🔄 Booking Rescheduled</h1>
+                        <p>Your appointment has been updated</p>
+                    </div>
+                    
+                    <div class="content">
+                        <div class="greeting">
+                            Dear <strong>${bookingData.fullName}</strong>,
+                        </div>
+                        
+                        <p>Your booking has been successfully rescheduled. Here are the details:</p>
+                        
+                        <div class="old-details">
+                            <h3>📅 Previous Appointment:</h3>
+                            <div class="detail-row">
+                                <span class="label">Date:</span>
+                                <span class="value">${new Date(bookingData.oldAppointmentDate).toLocaleDateString()}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Time:</span>
+                                <span class="value">${bookingData.oldSelectedTime}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="new-details">
+                            <h3>📅 New Appointment:</h3>
+                            <div class="detail-row">
+                                <span class="label">Service:</span>
+                                <span class="value">${bookingData.service}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Date:</span>
+                                <span class="value">${new Date(bookingData.newAppointmentDate).toLocaleDateString()}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Time:</span>
+                                <span class="value">${bookingData.newSelectedTime}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="label">Amount:</span>
+                                <span class="value">₱${bookingData.totalAmount}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="status-notice">
+                            <strong>⏳ Status: Pending Approval</strong><br>
+                            Your rescheduled booking is now pending admin approval. You will receive a confirmation email once it's approved.
+                        </div>
+                        
+                        <div class="contact-section">
+                            <h3>📞 Need Assistance?</h3>
+                            <p>If you have any questions about your rescheduled appointment, please contact us:</p>
+                            <p><strong>Phone:</strong> (0917)-1386-028<br>
+                            <strong>Email:</strong> cstyleshairsalon@gmail.com</p>
+                        </div>
+                        
+                        <p style="text-align: center; font-size: 16px; margin: 30px 0;">
+                            Thank you for choosing Celebrity Styles Hair Salon.<br>
+                            <strong>We look forward to seeing you!</strong>
+                        </p>
+                    </div>
+                    
+                    <div class="footer">
+                        <p>This is an automated email. Please do not reply to this message.</p>
+                    </div>
                 </div>
             </body>
             </html>
@@ -634,7 +879,7 @@ const sendEmail = async (to, template, data) => {
         }
         
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: 'cstyleshairsalon@gmail.com',
             to: to,
             subject: emailContent.subject,
             html: emailContent.html
@@ -665,6 +910,11 @@ const sendBookingCancellation = async (bookingData) => {
     return await sendEmail(bookingData.email, 'bookingCancellation', bookingData);
 };
 
+// Send booking reschedule email
+const sendBookingReschedule = async (bookingData) => {
+    return await sendEmail(bookingData.email, 'bookingReschedule', bookingData);
+};
+
 // Send password reset email
 const sendPasswordReset = async (resetData) => {
     return await sendEmail(resetData.email, 'passwordReset', resetData);
@@ -679,6 +929,7 @@ module.exports = {
     sendEmail,
     sendBookingConfirmation,
     sendBookingCancellation,
+    sendBookingReschedule,
     sendPasswordReset,
     sendOTPVerification
 }; 

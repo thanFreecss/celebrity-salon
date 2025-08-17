@@ -244,6 +244,11 @@ class UserProfile {
 
         bookings.forEach(booking => {
             const row = document.createElement('tr');
+            
+            // Determine which action buttons to show
+            const canReschedule = ['pending', 'confirmed', 'cancelled'].includes(booking.status);
+            const canCancel = ['pending', 'confirmed'].includes(booking.status);
+            
             row.innerHTML = `
                 <td>${booking.bookingId || (booking._id ? booking._id.slice(-8).toUpperCase() : 'N/A')}</td>
                 <td>${booking.service || 'N/A'}</td>
@@ -254,7 +259,8 @@ class UserProfile {
                 <td>₱${booking.totalAmount || 'N/A'}</td>
                 <td>
                     <button class="action-btn edit-btn" onclick="userProfile.viewBooking('${booking._id}')" title="View Details">View</button>
-                    ${['pending', 'confirmed'].includes(booking.status) ? `<button class="action-btn delete-btn" onclick="userProfile.cancelBooking('${booking._id}')" title="Cancel Booking">Cancel</button>` : ''}
+                    ${canReschedule ? `<button class="action-btn reschedule-btn" onclick="userProfile.rescheduleBooking('${booking._id}')" title="Reschedule Booking">Reschedule</button>` : ''}
+                    ${canCancel ? `<button class="action-btn delete-btn" onclick="userProfile.cancelBooking('${booking._id}')" title="Cancel Booking">Cancel</button>` : ''}
                 </td>
             `;
             tbody.appendChild(row);
@@ -315,6 +321,156 @@ class UserProfile {
         } catch (error) {
             console.error('Error cancelling booking:', error);
             this.showNotification('Error cancelling booking', 'error');
+        }
+    }
+
+    async rescheduleBooking(bookingId) {
+        try {
+            // First, get the booking details to pre-fill the form
+            const response = await fetch(`${this.API_BASE_URL}/bookings/${bookingId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                this.showNotification('Failed to load booking details', 'error');
+                return;
+            }
+
+            const data = await response.json();
+            const booking = data.data;
+
+            // Open reschedule modal with pre-filled data
+            this.openRescheduleModal(booking);
+        } catch (error) {
+            console.error('Error loading booking for reschedule:', error);
+            this.showNotification('Error loading booking details', 'error');
+        }
+    }
+
+    openRescheduleModal(booking) {
+        // Remove any existing reschedule modal
+        const existingModal = document.querySelector('.reschedule-modal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Create reschedule modal
+        const modalHTML = `
+            <div class="reschedule-modal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Reschedule Booking</h3>
+                        <button class="close-btn" onclick="userProfile.closeRescheduleModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="rescheduleForm">
+                            <div class="form-group">
+                                <label for="rescheduleService">Service</label>
+                                <input type="text" id="rescheduleService" value="${booking.service}" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="rescheduleDate">New Date <span class="required">*</span></label>
+                                <input type="date" id="rescheduleDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="rescheduleTime">New Time <span class="required">*</span></label>
+                                <select id="rescheduleTime" required>
+                                    <option value="">Select time...</option>
+                                    <option value="08:00">08:00 AM</option>
+                                    <option value="09:00">09:00 AM</option>
+                                    <option value="10:00">10:00 AM</option>
+                                    <option value="11:00">11:00 AM</option>
+                                    <option value="13:00">01:00 PM</option>
+                                    <option value="14:00">02:00 PM</option>
+                                    <option value="15:00">03:00 PM</option>
+                                    <option value="16:00">04:00 PM</option>
+                                    <option value="17:00">05:00 PM</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="rescheduleNotes">Additional Notes</label>
+                                <textarea id="rescheduleNotes" rows="3" placeholder="Any additional notes for the reschedule...">${booking.clientNotes || ''}</textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn-secondary" onclick="userProfile.closeRescheduleModal()">Cancel</button>
+                                <button type="submit" class="btn-primary">Reschedule Booking</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        // Set minimum date to today
+        const today = new Date();
+        const maxDate = new Date();
+        maxDate.setDate(today.getDate() + 14);
+        
+        const dateInput = document.getElementById('rescheduleDate');
+        dateInput.min = today.toISOString().split('T')[0];
+        dateInput.max = maxDate.toISOString().split('T')[0];
+
+        // Set current booking time as default
+        const timeSelect = document.getElementById('rescheduleTime');
+        if (booking.selectedTime) {
+            timeSelect.value = booking.selectedTime;
+        }
+
+        // Handle form submission
+        const form = document.getElementById('rescheduleForm');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.submitReschedule(booking._id);
+        });
+
+        // Show modal
+        document.querySelector('.reschedule-modal').style.display = 'flex';
+    }
+
+    closeRescheduleModal() {
+        const modal = document.querySelector('.reschedule-modal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    async submitReschedule(bookingId) {
+        const form = document.getElementById('rescheduleForm');
+        const formData = new FormData(form);
+
+        const rescheduleData = {
+            appointmentDate: formData.get('rescheduleDate'),
+            selectedTime: formData.get('rescheduleTime'),
+            clientNotes: formData.get('rescheduleNotes')
+        };
+
+        try {
+            const response = await fetch(`${this.API_BASE_URL}/bookings/${bookingId}/reschedule`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${this.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(rescheduleData)
+            });
+
+            if (response.ok) {
+                this.showNotification('Booking rescheduled successfully! It is now pending admin approval.', 'success');
+                this.closeRescheduleModal();
+                await this.loadBookingHistory(); // Refresh the list
+            } else {
+                const errorData = await response.json();
+                this.showNotification(errorData.message || 'Failed to reschedule booking', 'error');
+            }
+        } catch (error) {
+            console.error('Error rescheduling booking:', error);
+            this.showNotification('Error rescheduling booking', 'error');
         }
     }
 

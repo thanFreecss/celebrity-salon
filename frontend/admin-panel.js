@@ -112,6 +112,7 @@ async function fetchReservations() {
             reservations = data.data;
             populateReservationTable(reservations);
             updatePaginationInfo(reservations.length, 'reservation');
+            updateStatusTabCounts(); // Update status tab counts
             showNotification(`Successfully loaded ${reservations.length} reservations`, 'success');
         } else {
             console.error('Failed to fetch reservations:', data.message);
@@ -736,7 +737,8 @@ function populateReservationTable(data = reservations) {
     data.forEach(reservation => {
         const statusClass = reservation.status === 'confirmed' ? 'status-active' : 
                            reservation.status === 'completed' ? 'status-active' : 
-                           reservation.status === 'cancelled' ? 'status-inactive' : 'status-pending';
+                           reservation.status === 'cancelled' ? 'status-inactive' : 
+                           reservation.status === 'rejected' ? 'status-rejected' : 'status-pending';
         
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -759,10 +761,20 @@ function populateReservationTable(data = reservations) {
             </td>
             <td>
                 <div class="action-buttons">
-                    ${reservation.status !== 'confirmed' && reservation.status !== 'completed' ? 
+                    ${reservation.status === 'pending' ? 
                         `<button class="action-btn confirm-btn" onclick="confirmReservation('${reservation._id}')" title="Confirm">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                        </button>
+                        <button class="action-btn reject-btn" onclick="rejectReservation('${reservation._id}')" title="Reject">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8z"/>
+                            </svg>
+                        </button>
+                        <button class="action-btn cancel-btn" onclick="cancelReservation('${reservation._id}')" title="Cancel">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                             </svg>
                         </button>` : ''
                     }
@@ -771,12 +783,20 @@ function populateReservationTable(data = reservations) {
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
                             </svg>
-                        </button>` : ''
-                    }
-                    ${reservation.status !== 'cancelled' ? 
-                        `<button class="action-btn cancel-btn" onclick="cancelReservation('${reservation._id}')" title="Cancel">
+                        </button>
+                        <button class="action-btn cancel-btn" onclick="cancelReservation('${reservation._id}')" title="Cancel">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                            </svg>
+                        </button>` : ''
+                    }
+                    ${['completed', 'rejected', 'cancelled'].includes(reservation.status) ? 
+                        `<span class="status-locked" title="No further changes allowed">🔒</span>` : ''
+                    }
+                    ${reservation.status === 'cancelled' ? 
+                        `<button class="action-btn reschedule-btn" onclick="rescheduleReservation('${reservation._id}')" title="Reschedule">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8z"/>
                             </svg>
                         </button>` : ''
                     }
@@ -1177,14 +1197,7 @@ function setupSearchFunctionality() {
 
     // Reservation search
     document.getElementById('reservation-search-input').addEventListener('input', function(e) {
-        const searchTerm = e.target.value.toLowerCase();
-        const filteredReservations = reservations.filter(reservation => 
-            (reservation.customerName && reservation.customerName.toLowerCase().includes(searchTerm)) ||
-            (reservation.services && reservation.services.toLowerCase().includes(searchTerm)) ||
-            (reservation.stylist && reservation.stylist.toLowerCase().includes(searchTerm)) ||
-            (reservation.bookingId && reservation.bookingId.toLowerCase().includes(searchTerm))
-        );
-        populateReservationTable(filteredReservations);
+        searchReservations();
     });
 }
 
@@ -1234,6 +1247,10 @@ function showReservations() {
     // Fetch reservations if not already loaded
     if (reservations.length === 0) {
         fetchReservations();
+    } else {
+        // Initialize status tabs if reservations are already loaded
+        initializeStatusTabs();
+        filterReservationsByStatus(currentStatusFilter);
     }
 }
 
@@ -1432,7 +1449,188 @@ async function confirmReservation(id) {
     }
 }
 
-async function cancelReservation(id) {
+async function cancelReservation(reservationId) {
+    if (!confirm('Are you sure you want to cancel this reservation?')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/bookings/${reservationId}/status`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: 'cancelled' })
+        });
+
+        if (response.ok) {
+            showNotification('Reservation cancelled successfully', 'success');
+            await fetchReservations(); // Refresh the table
+        } else {
+            const errorData = await response.json();
+            showNotification('Failed to cancel reservation: ' + (errorData.message || 'Unknown error'), 'error');
+        }
+    } catch (error) {
+        console.error('Error cancelling reservation:', error);
+        showNotification('Error cancelling reservation', 'error');
+    }
+}
+
+async function rescheduleReservation(reservationId) {
+    try {
+        // First, get the reservation details
+        const response = await fetch(`${API_BASE_URL}/admin/bookings/${reservationId}`, {
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            showNotification('Failed to load reservation details', 'error');
+            return;
+        }
+
+        const data = await response.json();
+        const reservation = data.data;
+
+        // Open reschedule modal with pre-filled data
+        openAdminRescheduleModal(reservation);
+    } catch (error) {
+        console.error('Error loading reservation for reschedule:', error);
+        showNotification('Error loading reservation details', 'error');
+    }
+}
+
+function openAdminRescheduleModal(reservation) {
+    // Remove any existing reschedule modal
+    const existingModal = document.querySelector('.admin-reschedule-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Create reschedule modal
+    const modalHTML = `
+        <div class="admin-reschedule-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Reschedule Booking</h3>
+                    <button class="close-btn" onclick="closeAdminRescheduleModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="adminRescheduleForm">
+                        <div class="form-group">
+                            <label for="adminRescheduleService">Service</label>
+                            <input type="text" id="adminRescheduleService" value="${reservation.service}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="adminRescheduleCustomer">Customer</label>
+                            <input type="text" id="adminRescheduleCustomer" value="${reservation.fullName}" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="adminRescheduleDate">New Date <span class="required">*</span></label>
+                            <input type="date" id="adminRescheduleDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="adminRescheduleTime">New Time <span class="required">*</span></label>
+                            <select id="adminRescheduleTime" required>
+                                <option value="">Select time...</option>
+                                <option value="08:00">08:00 AM</option>
+                                <option value="09:00">09:00 AM</option>
+                                <option value="10:00">10:00 AM</option>
+                                <option value="11:00">11:00 AM</option>
+                                <option value="13:00">01:00 PM</option>
+                                <option value="14:00">02:00 PM</option>
+                                <option value="15:00">03:00 PM</option>
+                                <option value="16:00">04:00 PM</option>
+                                <option value="17:00">05:00 PM</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="adminRescheduleNotes">Additional Notes</label>
+                            <textarea id="adminRescheduleNotes" rows="3" placeholder="Any additional notes for the reschedule...">${reservation.clientNotes || ''}</textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn-secondary" onclick="closeAdminRescheduleModal()">Cancel</button>
+                            <button type="submit" class="btn-primary">Reschedule Booking</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    // Set minimum date to today
+    const today = new Date();
+    const maxDate = new Date();
+    maxDate.setDate(today.getDate() + 14);
+    
+    const dateInput = document.getElementById('adminRescheduleDate');
+    dateInput.min = today.toISOString().split('T')[0];
+    dateInput.max = maxDate.toISOString().split('T')[0];
+
+    // Set current booking time as default
+    const timeSelect = document.getElementById('adminRescheduleTime');
+    if (reservation.selectedTime) {
+        timeSelect.value = reservation.selectedTime;
+    }
+
+    // Handle form submission
+    const form = document.getElementById('adminRescheduleForm');
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        submitAdminReschedule(reservation._id);
+    });
+
+    // Show modal
+    document.querySelector('.admin-reschedule-modal').style.display = 'flex';
+}
+
+function closeAdminRescheduleModal() {
+    const modal = document.querySelector('.admin-reschedule-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+async function submitAdminReschedule(reservationId) {
+    const form = document.getElementById('adminRescheduleForm');
+    const formData = new FormData(form);
+
+    const rescheduleData = {
+        appointmentDate: formData.get('adminRescheduleDate'),
+        selectedTime: formData.get('adminRescheduleTime'),
+        clientNotes: formData.get('adminRescheduleNotes')
+    };
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/bookings/${reservationId}/reschedule`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${getAuthToken()}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(rescheduleData)
+        });
+
+        if (response.ok) {
+            showNotification('Booking rescheduled successfully! It is now pending approval.', 'success');
+            closeAdminRescheduleModal();
+            await fetchReservations(); // Refresh the table
+        } else {
+            const errorData = await response.json();
+            showNotification(errorData.message || 'Failed to reschedule booking', 'error');
+        }
+    } catch (error) {
+        console.error('Error rescheduling booking:', error);
+        showNotification('Error rescheduling booking', 'error');
+    }
+}
+
+async function rejectReservation(id) {
     const reservation = reservations.find(r => r._id === id);
     if (!reservation) {
         showNotification('Reservation not found', 'error');
@@ -1441,11 +1639,11 @@ async function cancelReservation(id) {
 
     // Show confirmation dialog
     const confirmed = await showConfirmDialog(
-        `Cancel Reservation`,
-        `Are you sure you want to cancel reservation for "${reservation.fullName}"?`,
-        'This will mark the reservation as cancelled and notify the customer.',
-        'Cancel',
-        '#f44336'
+        `Reject Reservation`,
+        `Are you sure you want to reject reservation for "${reservation.fullName}"?`,
+        'This will mark the reservation as rejected and notify the customer.',
+        'Reject',
+        '#ff9800'
     );
 
     if (confirmed) {
@@ -1456,15 +1654,15 @@ async function cancelReservation(id) {
                     'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ status: 'cancelled' })
+                body: JSON.stringify({ status: 'rejected' })
             });
             
             const data = await response.json();
             
             if (data.success) {
-                let message = `Reservation for "${reservation.fullName}" cancelled successfully`;
+                let message = `Reservation for "${reservation.fullName}" rejected successfully`;
                 if (data.emailSent) {
-                    message += ' - Cancellation email sent to customer';
+                    message += ' - Rejection email sent to customer';
                 } else {
                     message += ' - Email notification failed to send';
                 }
@@ -1472,12 +1670,12 @@ async function cancelReservation(id) {
                 await fetchReservations(); // Refresh the table
                 return true;
             } else {
-                showNotification(data.message || 'Failed to cancel reservation', 'error');
+                showNotification(data.message || 'Failed to reject reservation', 'error');
                 return false;
             }
         } catch (error) {
-            console.error('Error cancelling reservation:', error);
-            showNotification('Error cancelling reservation: ' + error.message, 'error');
+            console.error('Error rejecting reservation:', error);
+            showNotification('Error rejecting reservation: ' + error.message, 'error');
             return false;
         }
     }
@@ -1654,6 +1852,9 @@ function initializeAdminPanel() {
         // Setup other event listeners
         setupEventListeners();
         
+        // Initialize status tabs
+        initializeStatusTabs();
+        
         // Show employees section by default and fetch data
         showEmployees();
     }).catch(error => {
@@ -1661,6 +1862,7 @@ function initializeAdminPanel() {
         // Still proceed with initialization even if test fails
         setupSearchFunctionality();
         setupEventListeners();
+        initializeStatusTabs();
         showEmployees();
     });
 }
@@ -2395,4 +2597,122 @@ async function deleteBeforeAfterImage(id) {
         showNotification('Error deleting image: ' + error.message, 'error');
         return false;
     }
+}
+
+// Status Tab Functionality
+let currentStatusFilter = 'pending';
+
+function initializeStatusTabs() {
+    const statusTabs = document.querySelectorAll('.status-tab');
+    statusTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const status = tab.getAttribute('data-status');
+            setActiveStatusTab(status);
+            filterReservationsByStatus(status);
+        });
+    });
+    
+    // Initialize with pending status
+    updateStatusTabCounts();
+}
+
+function setActiveStatusTab(status) {
+    // Remove active class from all tabs
+    document.querySelectorAll('.status-tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Add active class to selected tab
+    const activeTab = document.querySelector(`[data-status="${status}"]`);
+    if (activeTab) {
+        activeTab.classList.add('active');
+    }
+    
+    currentStatusFilter = status;
+}
+
+function filterReservationsByStatus(status) {
+    let filteredReservations = [];
+    
+    if (status === 'all') {
+        filteredReservations = reservations;
+    } else {
+        filteredReservations = reservations.filter(reservation => {
+            const reservationStatus = reservation.status || 'pending';
+            return reservationStatus.toLowerCase() === status.toLowerCase();
+        });
+    }
+    
+    populateReservationTable(filteredReservations);
+    updatePaginationInfo(filteredReservations.length, 'reservation');
+    
+    // Update search functionality to work with filtered data
+    const searchInput = document.getElementById('reservation-search-input');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+}
+
+function updateStatusTabCounts() {
+    const statusCounts = {
+        pending: 0,
+        confirmed: 0,
+        completed: 0,
+        rejected: 0,
+        cancelled: 0,
+        all: reservations.length
+    };
+    
+    reservations.forEach(reservation => {
+        const status = (reservation.status || 'pending').toLowerCase();
+        if (statusCounts.hasOwnProperty(status)) {
+            statusCounts[status]++;
+        }
+    });
+    
+    // Update tab counts
+    Object.keys(statusCounts).forEach(status => {
+        const tab = document.querySelector(`[data-status="${status}"]`);
+        if (tab) {
+            let countElement = tab.querySelector('.count');
+            if (!countElement) {
+                countElement = document.createElement('span');
+                countElement.className = 'count';
+                tab.appendChild(countElement);
+            }
+            countElement.textContent = statusCounts[status];
+        }
+    });
+}
+
+// Enhanced search function that works with status filtering
+function searchReservations() {
+    const searchTerm = document.getElementById('reservation-search-input').value.toLowerCase();
+    
+    let filteredReservations = reservations;
+    
+    // First filter by current status
+    if (currentStatusFilter !== 'all') {
+        filteredReservations = reservations.filter(reservation => {
+            const reservationStatus = reservation.status || 'pending';
+            return reservationStatus.toLowerCase() === currentStatusFilter.toLowerCase();
+        });
+    }
+    
+    // Then filter by search term
+    if (searchTerm) {
+        filteredReservations = filteredReservations.filter(reservation => {
+            return (
+                (reservation.fullName && reservation.fullName.toLowerCase().includes(searchTerm)) ||
+                (reservation.email && reservation.email.toLowerCase().includes(searchTerm)) ||
+                (reservation.mobileNumber && reservation.mobileNumber.includes(searchTerm)) ||
+                (reservation.bookingId && reservation.bookingId.toLowerCase().includes(searchTerm)) ||
+                (reservation.service && mapSpecialtyToReadable(reservation.service).toLowerCase().includes(searchTerm)) ||
+                (reservation.stylistName && reservation.stylistName.toLowerCase().includes(searchTerm))
+            );
+        });
+    }
+    
+    populateReservationTable(filteredReservations);
+    updatePaginationInfo(filteredReservations.length, 'reservation');
 }

@@ -7,6 +7,7 @@ const Service = require('../models/Service');
 const Employee = require('../models/Employee');
 const mongoose = require('mongoose');
 const { sendBookingConfirmation, sendBookingCancellation } = require('../utils/emailService');
+const { body, validationResult } = require('express-validator');
 
 // Check database connection
 const checkDBConnection = () => {
@@ -92,6 +93,34 @@ router.get('/dashboard', protect, admin, async (req, res) => {
     }
 });
 
+// @route   GET /api/admin/bookings/:id
+// @desc    Get single booking by ID
+// @access  Private (Admin only)
+router.get('/bookings/:id', protect, admin, async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id)
+            .populate('user', 'name email');
+
+        if (!booking) {
+            return res.status(404).json({
+                success: false,
+                message: 'Booking not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: booking
+        });
+    } catch (error) {
+        console.error('Error fetching booking:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+});
+
 // @route   GET /api/admin/bookings
 // @desc    Get all bookings with filters
 // @access  Private (Admin only)
@@ -99,18 +128,28 @@ router.get('/bookings', protect, admin, async (req, res) => {
     try {
         const { status, date, page = 1, limit = 10 } = req.query;
         
+        // Build filter object
         const filter = {};
         
-        if (status) filter.status = status;
+        if (status && status !== 'all') {
+            filter.status = status;
+        }
+        
         if (date) {
             const startDate = new Date(date);
             const endDate = new Date(date);
             endDate.setDate(endDate.getDate() + 1);
-            filter.appointmentDate = { $gte: startDate, $lt: endDate };
+            
+            filter.appointmentDate = {
+                $gte: startDate,
+                $lt: endDate
+            };
         }
-
-        const skip = (page - 1) * limit;
         
+        // Calculate skip value for pagination
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        
+        // Get bookings with pagination
         const bookings = await Booking.find(filter)
             .sort({ createdAt: -1 })
             .skip(skip)
@@ -141,20 +180,22 @@ router.get('/bookings', protect, admin, async (req, res) => {
             return bookingObj;
         }));
 
-        const total = await Booking.countDocuments(filter);
-
+        // Get total count for pagination
+        const totalBookings = await Booking.countDocuments(filter);
+        
         res.json({
             success: true,
             data: bookingsWithEmployeeInfo,
             pagination: {
                 currentPage: parseInt(page),
-                totalPages: Math.ceil(total / limit),
-                totalItems: total,
-                itemsPerPage: parseInt(limit)
+                totalPages: Math.ceil(totalBookings / parseInt(limit)),
+                totalBookings,
+                hasNextPage: skip + bookings.length < totalBookings,
+                hasPrevPage: parseInt(page) > 1
             }
         });
     } catch (error) {
-        console.error(error);
+        console.error('Error fetching bookings:', error);
         res.status(500).json({
             success: false,
             message: 'Server error'
@@ -163,7 +204,7 @@ router.get('/bookings', protect, admin, async (req, res) => {
 });
 
 // @route   PUT /api/admin/bookings/:id/status
-// @desc    Update booking status
+// @desc    Update booking status with transition validation
 // @access  Private (Admin only)
 router.put('/bookings/:id/status', protect, admin, async (req, res) => {
     try {
@@ -175,6 +216,26 @@ router.put('/bookings/:id/status', protect, admin, async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: 'Booking not found'
+            });
+        }
+
+        // Define allowed status transitions
+        const allowedTransitions = {
+            'pending': ['confirmed', 'rejected', 'cancelled'],
+            'confirmed': ['completed', 'cancelled'],
+            'completed': [], // No further changes allowed
+            'rejected': [], // No further changes allowed
+            'cancelled': [] // No further changes allowed
+        };
+
+        const currentStatus = booking.status;
+        const allowedNextStatuses = allowedTransitions[currentStatus];
+
+        // Check if the requested status transition is allowed
+        if (!allowedNextStatuses.includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: `Cannot change status from '${currentStatus}' to '${status}'. Allowed transitions from '${currentStatus}': ${allowedNextStatuses.join(', ') || 'none'}`
             });
         }
 
@@ -230,6 +291,24 @@ router.put('/bookings/:id/status', protect, admin, async (req, res) => {
             } else {
                 console.error('Failed to send cancellation email:', emailResult.error);
             }
+        } else if (status === 'rejected' && previousStatus !== 'rejected') {
+            // For rejected status, we can use the same cancellation email template
+            // or create a specific rejection email template
+            const emailData = {
+                fullName: booking.fullName,
+                email: booking.email,
+                service: booking.service,
+                appointmentDate: booking.appointmentDate,
+                selectedTime: booking.selectedTime
+            };
+
+            emailResult = await sendBookingCancellation(emailData);
+            
+            if (emailResult.success) {
+                console.log('Rejection email sent successfully to:', booking.email);
+            } else {
+                console.error('Failed to send rejection email:', emailResult.error);
+            }
         }
 
         res.json({
@@ -237,6 +316,120 @@ router.put('/bookings/:id/status', protect, admin, async (req, res) => {
             message: 'Booking status updated successfully',
             data: booking,
             emailSent: emailResult ? emailResult.success : false
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    }
+});
+
+// @route   PUT /api/admin/bookings/:id/reschedule
+// @desc    Reschedule a booking (admin only)
+// @access  Private (Admin only)
+router.put('/bookings/:id/reschedule', protect, admin, [
+    body('appointmentDate').isISO8601().withMessage('Please provide a valid date'),
+    body('selectedTime').isIn(['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00']).withMessage('Please select a valid time slot'),
+    body('selectedEmployee').optional(),
+    body('clientNotes').optional()
+], async (req, res) => {
+    try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                success: false,
+                errors: errors.array()
+            });
+        }
+
+        const booking = await Booking.findById(req.params.id);
+        
+        if (!booking) {
+            return res.status(404).json({
+                success: false,
+                message: 'Booking not found'
+            });
+        }
+
+        // Check if booking can be rescheduled (pending, confirmed, or cancelled bookings)
+        if (!['pending', 'confirmed', 'cancelled'].includes(booking.status)) {
+            return res.status(400).json({
+                success: false,
+                message: 'This booking cannot be rescheduled'
+            });
+        }
+
+        const { appointmentDate, selectedTime, selectedEmployee, clientNotes } = req.body;
+
+        // Validate appointment date is not in the past
+        const appointmentDateTime = new Date(appointmentDate);
+        const now = new Date();
+        
+        if (appointmentDateTime < now) {
+            return res.status(400).json({
+                success: false,
+                message: 'Appointment date cannot be in the past.'
+            });
+        }
+
+        // Check if the new time slot is available (excluding the current booking)
+        const existingBooking = await Booking.findOne({
+            _id: { $ne: booking._id }, // Exclude current booking
+            appointmentDate: new Date(appointmentDate),
+            selectedTime,
+            status: { $in: ['pending', 'confirmed'] }
+        });
+
+        if (existingBooking) {
+            return res.status(400).json({
+                success: false,
+                message: 'This time slot is already booked. Please select another time.'
+            });
+        }
+
+        // Store old booking details for email
+        const oldBookingDetails = {
+            appointmentDate: booking.appointmentDate,
+            selectedTime: booking.selectedTime,
+            selectedEmployee: booking.selectedEmployee
+        };
+
+        // Update booking with new details
+        booking.appointmentDate = new Date(appointmentDate);
+        booking.selectedTime = selectedTime;
+        booking.selectedEmployee = selectedEmployee || booking.selectedEmployee;
+        booking.clientNotes = clientNotes || booking.clientNotes;
+        booking.status = 'pending'; // Reset to pending for admin approval
+        booking.updatedAt = Date.now();
+
+        await booking.save();
+
+        // Send reschedule email
+        const { sendBookingReschedule } = require('../utils/emailService');
+        const emailData = {
+            fullName: booking.fullName,
+            email: booking.email,
+            service: booking.service,
+            oldAppointmentDate: oldBookingDetails.appointmentDate,
+            oldSelectedTime: oldBookingDetails.selectedTime,
+            newAppointmentDate: booking.appointmentDate,
+            newSelectedTime: booking.selectedTime,
+            totalAmount: booking.totalAmount
+        };
+
+        try {
+            await sendBookingReschedule(emailData);
+            console.log('Reschedule email sent successfully to:', booking.email);
+        } catch (emailError) {
+            console.error('Failed to send reschedule email:', emailError);
+        }
+
+        res.json({
+            success: true,
+            message: 'Booking rescheduled successfully. It is now pending admin approval.',
+            data: booking
         });
     } catch (error) {
         console.error(error);
