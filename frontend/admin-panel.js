@@ -1505,35 +1505,35 @@ async function rescheduleReservation(reservationId) {
 
 function openAdminRescheduleModal(reservation) {
     // Remove any existing reschedule modal
-    const existingModal = document.querySelector('.admin-reschedule-modal');
+    const existingModal = document.getElementById('admin-reschedule-modal');
     if (existingModal) {
         existingModal.remove();
     }
 
     // Create reschedule modal
     const modalHTML = `
-        <div class="admin-reschedule-modal">
+        <div class="modal-overlay" id="admin-reschedule-modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>Reschedule Booking</h3>
-                    <button class="close-btn" onclick="closeAdminRescheduleModal()">&times;</button>
+                    <h1>Reschedule Booking</h1>
+                    <button class="modal-close" onclick="closeAdminRescheduleModal()">&times;</button>
                 </div>
                 <div class="modal-body">
                     <form id="adminRescheduleForm">
-                        <div class="form-group">
-                            <label for="adminRescheduleService">Service</label>
+                        <div class="form-field">
+                            <label><strong>Service</strong></label>
                             <input type="text" id="adminRescheduleService" value="${reservation.service}" readonly>
                         </div>
-                        <div class="form-group">
-                            <label for="adminRescheduleCustomer">Customer</label>
+                        <div class="form-field">
+                            <label><strong>Customer</strong></label>
                             <input type="text" id="adminRescheduleCustomer" value="${reservation.fullName}" readonly>
                         </div>
-                        <div class="form-group">
-                            <label for="adminRescheduleDate">New Date <span class="required">*</span></label>
+                        <div class="form-field">
+                            <label><strong>Date</strong> <span style="color: #e74c3c;">*</span></label>
                             <input type="date" id="adminRescheduleDate" required>
                         </div>
-                        <div class="form-group">
-                            <label for="adminRescheduleTime">New Time <span class="required">*</span></label>
+                        <div class="form-field">
+                            <label><strong>Time</strong> <span style="color: #e74c3c;">*</span></label>
                             <select id="adminRescheduleTime" required>
                                 <option value="">Select time...</option>
                                 <option value="08:00">08:00 AM</option>
@@ -1547,13 +1547,18 @@ function openAdminRescheduleModal(reservation) {
                                 <option value="17:00">05:00 PM</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label for="adminRescheduleNotes">Additional Notes</label>
+                        <div class="form-field">
+                            <label><strong>Additional Notes</strong></label>
                             <textarea id="adminRescheduleNotes" rows="3" placeholder="Any additional notes for the reschedule...">${reservation.clientNotes || ''}</textarea>
                         </div>
                         <div class="form-actions">
-                            <button type="button" class="btn-secondary" onclick="closeAdminRescheduleModal()">Cancel</button>
-                            <button type="submit" class="btn-primary">Reschedule Booking</button>
+                            <button type="button" class="btn-cancel" onclick="closeAdminRescheduleModal()">Cancel</button>
+                            <button type="submit" class="btn-submit">
+                                <svg class="btn-icon" viewBox="0 0 24 24">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                </svg>
+                                Reschedule Booking
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -1572,6 +1577,21 @@ function openAdminRescheduleModal(reservation) {
     dateInput.min = today.toISOString().split('T')[0];
     dateInput.max = maxDate.toISOString().split('T')[0];
 
+    // Set current booking date as default
+    if (reservation.appointmentDate) {
+        const bookingDate = new Date(reservation.appointmentDate);
+        // Ensure the date is valid and format it properly
+        if (!isNaN(bookingDate.getTime())) {
+            dateInput.value = bookingDate.toISOString().split('T')[0];
+        } else {
+            // If the date is invalid, set to today
+            dateInput.value = today.toISOString().split('T')[0];
+        }
+    } else {
+        // If no appointment date, set to today
+        dateInput.value = today.toISOString().split('T')[0];
+    }
+
     // Set current booking time as default
     const timeSelect = document.getElementById('adminRescheduleTime');
     if (reservation.selectedTime) {
@@ -1586,11 +1606,11 @@ function openAdminRescheduleModal(reservation) {
     });
 
     // Show modal
-    document.querySelector('.admin-reschedule-modal').style.display = 'flex';
+    document.getElementById('admin-reschedule-modal').style.display = 'flex';
 }
 
 function closeAdminRescheduleModal() {
-    const modal = document.querySelector('.admin-reschedule-modal');
+    const modal = document.getElementById('admin-reschedule-modal');
     if (modal) {
         modal.remove();
     }
@@ -1598,13 +1618,34 @@ function closeAdminRescheduleModal() {
 
 async function submitAdminReschedule(reservationId) {
     const form = document.getElementById('adminRescheduleForm');
-    const formData = new FormData(form);
+    
+    // Get form values directly from the input elements
+    const dateInput = document.getElementById('adminRescheduleDate');
+    const timeSelect = document.getElementById('adminRescheduleTime');
+    const notesTextarea = document.getElementById('adminRescheduleNotes');
+
+    // Validate required fields
+    if (!dateInput.value) {
+        showNotification('Please select a date', 'error');
+        return;
+    }
+
+    if (!timeSelect.value) {
+        showNotification('Please select a time', 'error');
+        return;
+    }
+
+    // Ensure date is in full ISO 8601 format for backend validation
+    const selectedDate = new Date(dateInput.value);
+    const isoDateTime = selectedDate.toISOString();
 
     const rescheduleData = {
-        appointmentDate: formData.get('adminRescheduleDate'),
-        selectedTime: formData.get('adminRescheduleTime'),
-        clientNotes: formData.get('adminRescheduleNotes')
+        appointmentDate: isoDateTime,
+        selectedTime: timeSelect.value,
+        clientNotes: notesTextarea.value || ''
     };
+
+    console.log('Sending reschedule data:', rescheduleData);
 
     try {
         const response = await fetch(`${API_BASE_URL}/admin/bookings/${reservationId}/reschedule`, {
@@ -1616,13 +1657,23 @@ async function submitAdminReschedule(reservationId) {
             body: JSON.stringify(rescheduleData)
         });
 
+        console.log('Response status:', response.status);
+
         if (response.ok) {
             showNotification('Booking rescheduled successfully! It is now pending approval.', 'success');
             closeAdminRescheduleModal();
             await fetchReservations(); // Refresh the table
         } else {
             const errorData = await response.json();
-            showNotification(errorData.message || 'Failed to reschedule booking', 'error');
+            console.log('Error response:', errorData);
+            
+            // Show more detailed error information
+            if (errorData.errors && errorData.errors.length > 0) {
+                const errorMessages = errorData.errors.map(err => `${err.param}: ${err.msg}`).join(', ');
+                showNotification(`Validation errors: ${errorMessages}`, 'error');
+            } else {
+                showNotification(errorData.message || 'Failed to reschedule booking', 'error');
+            }
         }
     } catch (error) {
         console.error('Error rescheduling booking:', error);

@@ -370,15 +370,15 @@ class UserProfile {
                         <form id="rescheduleForm">
                             <div class="form-group">
                                 <label for="rescheduleService">Service</label>
-                                <input type="text" id="rescheduleService" value="${booking.service}" readonly>
+                                <input type="text" id="rescheduleService" name="rescheduleService" value="${booking.service}" readonly>
                             </div>
                             <div class="form-group">
                                 <label for="rescheduleDate">New Date <span class="required">*</span></label>
-                                <input type="date" id="rescheduleDate" required>
+                                <input type="date" id="rescheduleDate" name="rescheduleDate" required>
                             </div>
                             <div class="form-group">
                                 <label for="rescheduleTime">New Time <span class="required">*</span></label>
-                                <select id="rescheduleTime" required>
+                                <select id="rescheduleTime" name="rescheduleTime" required>
                                     <option value="">Select time...</option>
                                     <option value="08:00">08:00 AM</option>
                                     <option value="09:00">09:00 AM</option>
@@ -393,7 +393,7 @@ class UserProfile {
                             </div>
                             <div class="form-group">
                                 <label for="rescheduleNotes">Additional Notes</label>
-                                <textarea id="rescheduleNotes" rows="3" placeholder="Any additional notes for the reschedule...">${booking.clientNotes || ''}</textarea>
+                                <textarea id="rescheduleNotes" name="rescheduleNotes" rows="3" placeholder="Any additional notes for the reschedule...">${booking.clientNotes || ''}</textarea>
                             </div>
                             <div class="form-actions">
                                 <button type="button" class="btn-secondary" onclick="userProfile.closeRescheduleModal()">Cancel</button>
@@ -416,6 +416,12 @@ class UserProfile {
         dateInput.min = today.toISOString().split('T')[0];
         dateInput.max = maxDate.toISOString().split('T')[0];
 
+        // Set current booking date as default
+        if (booking.appointmentDate) {
+            const bookingDate = new Date(booking.appointmentDate);
+            dateInput.value = bookingDate.toISOString().split('T')[0];
+        }
+
         // Set current booking time as default
         const timeSelect = document.getElementById('rescheduleTime');
         if (booking.selectedTime) {
@@ -430,13 +436,36 @@ class UserProfile {
         });
 
         // Show modal
-        document.querySelector('.reschedule-modal').style.display = 'flex';
+        const modal = document.querySelector('.reschedule-modal');
+        modal.classList.add('show');
+
+        // Add click outside to close functionality
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeRescheduleModal();
+            }
+        });
+
+        // Add keyboard support (Escape key)
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                this.closeRescheduleModal();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
     }
 
     closeRescheduleModal() {
         const modal = document.querySelector('.reschedule-modal');
         if (modal) {
-            modal.remove();
+            modal.classList.add('closing');
+            modal.classList.remove('show');
+            setTimeout(() => {
+                if (modal.parentNode) {
+                    modal.remove();
+                }
+            }, 300); // Wait for animation to complete
         }
     }
 
@@ -444,11 +473,37 @@ class UserProfile {
         const form = document.getElementById('rescheduleForm');
         const formData = new FormData(form);
 
+        // Validate required fields
+        const appointmentDate = formData.get('rescheduleDate');
+        const selectedTime = formData.get('rescheduleTime');
+        
+        if (!appointmentDate) {
+            this.showNotification('Please select a date', 'error');
+            return;
+        }
+
+        if (!selectedTime) {
+            this.showNotification('Please select a time', 'error');
+            return;
+        }
+
+        // Ensure date is in full ISO 8601 format for backend validation
+        const selectedDate = new Date(appointmentDate);
+        const isoDateTime = selectedDate.toISOString();
+
         const rescheduleData = {
-            appointmentDate: formData.get('rescheduleDate'),
-            selectedTime: formData.get('rescheduleTime'),
-            clientNotes: formData.get('rescheduleNotes')
+            appointmentDate: isoDateTime,
+            selectedTime: selectedTime,
+            clientNotes: formData.get('rescheduleNotes') || ''
         };
+
+        console.log('Sending reschedule data:', rescheduleData);
+
+        // Show loading state
+        const submitBtn = document.querySelector('#rescheduleForm button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Rescheduling...';
+        submitBtn.disabled = true;
 
         try {
             const response = await fetch(`${this.API_BASE_URL}/bookings/${bookingId}/reschedule`, {
@@ -460,17 +515,34 @@ class UserProfile {
                 body: JSON.stringify(rescheduleData)
             });
 
+            console.log('Response status:', response.status);
+
             if (response.ok) {
                 this.showNotification('Booking rescheduled successfully! It is now pending admin approval.', 'success');
                 this.closeRescheduleModal();
                 await this.loadBookingHistory(); // Refresh the list
             } else {
                 const errorData = await response.json();
-                this.showNotification(errorData.message || 'Failed to reschedule booking', 'error');
+                console.log('Error response:', errorData);
+                
+                // Show more detailed error information
+                if (errorData.errors && errorData.errors.length > 0) {
+                    const errorMessages = errorData.errors.map(err => `${err.param}: ${err.msg}`).join(', ');
+                    this.showNotification(`Validation errors: ${errorMessages}`, 'error');
+                } else {
+                    this.showNotification(errorData.message || 'Failed to reschedule booking', 'error');
+                }
             }
         } catch (error) {
             console.error('Error rescheduling booking:', error);
             this.showNotification('Error rescheduling booking', 'error');
+        } finally {
+            // Reset button state
+            const submitBtn = document.querySelector('#rescheduleForm button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
         }
     }
 

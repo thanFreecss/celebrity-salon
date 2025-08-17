@@ -18,8 +18,43 @@ main.home-bg {
 @media (max-width: 768px) {
     main.home-bg {
         min-height: 70vh;
+        background-size: cover;
+        background-position: center;
         background-attachment: scroll;
-        background-position: center 20%;
+    }
+}
+
+@media (max-width: 768px) {
+    main {
+        height: 70vh;
+        background-size: cover;
+        background-position: center;
+    }
+}
+
+@media (max-width: 480px) {
+    main {
+        height: 60vh;
+        background-size: cover;
+        background-position: center;
+    }
+    
+    main.home-bg {
+        min-height: 60vh;
+        background-size: cover;
+        background-position: center;
+    }
+
+    /* Small Mobile Button Styles */
+    .button {
+        width: 70px;
+        height: 32px;
+        font-size: 12px;
+        border-radius: 6px;
+    }
+
+    .user-actions, .user-profile {
+        gap: 6px;
     }
 }
 
@@ -97,6 +132,11 @@ main {
     align-items: center;
     justify-content: center;
     height: 80vh;
+    background: url('images/model.wbp') no-repeat center center;
+    background-size: cover;
+    background-position: center;
+    color: #fff;
+    position: relative;
 }
 
 .hero {
@@ -328,59 +368,55 @@ footer {
 
 /* Removed conflicting .login-btn styles to use .button styles instead */
 
-/* New Button Design */
+/* Modern Button Design */
 .button {
     background-color: #4CAF50;
-    color: #F6EFD2;
-    width: 8.5em;
-    height: 2.9em;
-    border: #4CAF50 0.2em solid;
-    border-radius: 11px;
+    color: white;
+    width: 100px;
+    height: 40px;
+    border: none;
+    border-radius: 8px;
     text-align: center;
-    transition: all 0.6s ease;
+    transition: all 0.3s ease;
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 600;
-    font-size: 16px;
+    font-size: 14px;
     margin: 0;
     text-decoration: none;
     cursor: pointer;
     box-sizing: border-box;
-    background-clip: padding-box;
-    background-origin: padding-box;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Login button - Green */
 #login-btn {
     background-color: #4CAF50;
-    border-color: #4CAF50;
 }
 
 #login-btn:hover {
     background-color: #45a049;
-    border-color: #45a049;
+    transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
 }
 
 /* Sign Up button - Blue */
 #signup-btn {
-    background-color: #3654ff;
-    border-color: #3654ff;
+    background-color: #2196F3;
 }
 
 #signup-btn:hover {
-    background-color: #2a42cc;
-    border-color: #2a42cc;
-    box-shadow: 0 4px 8px rgba(54, 84, 255, 0.3);
+    background-color: #1976D2;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
 }
 
 .button:hover {
     cursor: pointer;
     text-decoration: none;
-    color: #F6EFD2;
-    transform: translateY(-2px);
+    color: white;
 }
 
 .text {
@@ -531,6 +567,17 @@ footer {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-50px);
     }
 }
 
@@ -1859,29 +1906,42 @@ footer {
 .mobile-menu-toggle {
     display: none;
     flex-direction: column;
-    background: none;
+    background: #E43636;
     border: none;
     cursor: pointer;
-    padding: 8px;
-    gap: 4px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
     position: absolute;
     right: 15px;
     top: 50%;
     transform: translateY(-50%);
     z-index: 1001;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 0;
+    box-shadow: 0 2px 8px rgba(228, 54, 54, 0.3);
+    transition: all 0.3s ease;
+}
+
+.mobile-menu-toggle:hover {
+    background: #c42e2e;
+    transform: translateY(-50%) scale(1.05);
+    box-shadow: 0 4px 12px rgba(228, 54, 54, 0.4);
 }
 
 .mobile-menu-toggle span {
     display: block;
-    width: 25px;
-    height: 3px;
-    background-color: #3d2e2e;
+    width: 20px;
+    height: 2px;
+    background-color: white;
     transition: all 0.3s ease;
-    border-radius: 2px;
+    border-radius: 1px;
 }
 
 .mobile-menu-toggle.active span:nth-child(1) {
-    transform: rotate(45deg) translate(6px, 6px);
+    transform: rotate(45deg) translate(0, 5px);
 }
 
 .mobile-menu-toggle.active span:nth-child(2) {
@@ -1889,7 +1949,7 @@ footer {
 }
 
 .mobile-menu-toggle.active span:nth-child(3) {
-    transform: rotate(-45deg) translate(6px, -6px);
+    transform: rotate(-45deg) translate(0, -5px);
 }
 
 /* Mobile Responsive Styles */
@@ -1976,6 +2036,14 @@ footer {
         order: 2;
         margin-top: 0;
         gap: 8px;
+    }
+
+    /* Mobile Button Styles */
+    .button {
+        width: 80px;
+        height: 36px;
+        font-size: 13px;
+        border-radius: 6px;
     }
 
     /* Removed conflicting .login-btn mobile styles to use .button styles instead */
@@ -2944,6 +3012,10 @@ footer {
     overflow: hidden;
     box-shadow: 0 20px 40px rgba(0,0,0,0.2);
     animation: slideIn 0.3s ease-out;
+}
+
+.reschedule-modal.closing .modal-content {
+    animation: slideOut 0.3s ease-out;
 }
 
 .reschedule-modal .modal-header {

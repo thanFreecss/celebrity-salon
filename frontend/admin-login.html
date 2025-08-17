@@ -14,6 +14,7 @@
             justify-content: center;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 20px;
+            box-sizing: border-box;
         }
         
         .admin-login-form {
@@ -24,6 +25,9 @@
             width: 100%;
             max-width: 400px;
             text-align: center;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
         
         .admin-login-form h2 {
@@ -83,45 +87,45 @@
             transform: translateY(-2px);
         }
         
-        /* New Button Design */
+        /* Clean Blue Button Design */
         .button {
-            background-color: #E43636;
-            color: #F6EFD2;
-            width: 8.5em;
-            height: 2.9em;
-            border: #E43636 0.2em solid;
-            border-radius: 11px;
+            background-color: #007bff;
+            color: white;
+            width: 100%;
+            height: 48px;
+            border: none;
+            border-radius: 8px;
             text-align: center;
-            transition: all 0.6s ease;
-            position: relative;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 600;
             font-size: 16px;
             margin: 20px auto;
-        }
-
-        .button:hover {
-            background-color: #c42e2e;
-            border-color: #c42e2e;
             cursor: pointer;
         }
 
-        .button svg {
-            width: 1.6em;
-            margin: -0.2em 0.8em 1em;
-            position: absolute;
-            display: flex;
-            transition: all 0.6s ease;
+        .button:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
         }
 
-        .button:hover svg {
-            transform: translateX(5px);
+        .button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+        }
+
+        .button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         .text {
-            margin: 0 1.5em;
+            margin: 0;
         }
         
         .back-home {
@@ -187,7 +191,7 @@
                 </div>
                 
                 <button type="submit" class="button">
-                    <span class="text">Login to Admin Panel</span>
+                    <span class="text">Login</span>
                 </button>
             </form>
             
@@ -340,7 +344,7 @@
             } finally {
                 // Reset button state
                 const submitBtn = this.querySelector('.button');
-                submitBtn.querySelector('.text').textContent = 'Login to Admin Panel';
+                submitBtn.querySelector('.text').textContent = 'Login';
                 submitBtn.disabled = false;
             }
         });
