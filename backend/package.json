@@ -12,6 +12,7 @@
     "debug-users": "node debugUsers.js",
     "init-db": "node initDatabase.js",
     "test-email": "node test-email.js",
+    "setup-email": "node setup-email.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
