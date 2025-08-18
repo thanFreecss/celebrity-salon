@@ -407,23 +407,28 @@ router.put('/bookings/:id/reschedule', protect, admin, [
         await booking.save();
 
         // Send reschedule email
-        const { sendBookingReschedule } = require('../utils/emailService');
-        const emailData = {
-            fullName: booking.fullName,
-            email: booking.email,
-            service: booking.service,
-            oldAppointmentDate: oldBookingDetails.appointmentDate,
-            oldSelectedTime: oldBookingDetails.selectedTime,
-            newAppointmentDate: booking.appointmentDate,
-            newSelectedTime: booking.selectedTime,
-            totalAmount: booking.totalAmount
-        };
-
         try {
-            await sendBookingReschedule(emailData);
-            console.log('Reschedule email sent successfully to:', booking.email);
+            const { sendBookingReschedule } = require('../utils/emailService');
+            const emailData = {
+                fullName: booking.fullName,
+                email: booking.email,
+                service: booking.service,
+                oldAppointmentDate: oldBookingDetails.appointmentDate,
+                oldSelectedTime: oldBookingDetails.selectedTime,
+                newAppointmentDate: booking.appointmentDate,
+                newSelectedTime: booking.selectedTime,
+                totalAmount: booking.totalAmount
+            };
+
+            const emailResult = await sendBookingReschedule(emailData);
+            if (emailResult.success) {
+                console.log('Reschedule email sent successfully to:', booking.email);
+            } else {
+                console.error('Failed to send reschedule email:', emailResult.error);
+            }
         } catch (emailError) {
             console.error('Failed to send reschedule email:', emailError);
+            // Don't fail the reschedule if email fails
         }
 
         res.json({
@@ -452,6 +457,28 @@ router.delete('/bookings/:id', protect, admin, async (req, res) => {
                 success: false,
                 message: 'Booking not found'
             });
+        }
+
+        // Send cancellation email before deleting
+        try {
+            const { sendBookingCancellation } = require('../utils/emailService');
+            const emailData = {
+                fullName: booking.fullName,
+                email: booking.email,
+                service: booking.service,
+                appointmentDate: booking.appointmentDate,
+                selectedTime: booking.selectedTime
+            };
+
+            const emailResult = await sendBookingCancellation(emailData);
+            if (emailResult.success) {
+                console.log('Cancellation email sent successfully to:', booking.email);
+            } else {
+                console.error('Failed to send cancellation email:', emailResult.error);
+            }
+        } catch (emailError) {
+            console.error('Failed to send cancellation email:', emailError);
+            // Don't fail the deletion if email fails
         }
 
         await Booking.findByIdAndDelete(req.params.id);

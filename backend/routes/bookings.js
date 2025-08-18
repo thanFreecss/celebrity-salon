@@ -120,6 +120,30 @@ router.post('/', [
         });
         console.log('Booking created with ID:', booking._id, 'Booking ID:', booking.bookingId);
 
+        // Send booking confirmation email
+        try {
+            const { sendBookingConfirmation } = require('../utils/emailService');
+            const emailData = {
+                fullName: booking.fullName,
+                email: booking.email,
+                service: booking.service,
+                appointmentDate: booking.appointmentDate,
+                selectedTime: booking.selectedTime,
+                totalAmount: booking.totalAmount,
+                stylistName: null // Will be assigned by admin later
+            };
+            
+            const emailResult = await sendBookingConfirmation(emailData);
+            if (emailResult.success) {
+                console.log('Booking confirmation email sent successfully to:', booking.email);
+            } else {
+                console.error('Failed to send booking confirmation email:', emailResult.error);
+            }
+        } catch (emailError) {
+            console.error('Error sending booking confirmation email:', emailError);
+            // Don't fail the booking creation if email fails
+        }
+
         res.status(201).json({
             success: true,
             message: 'Booking created successfully',
@@ -390,23 +414,28 @@ router.put('/:id/reschedule', protect, [
         await booking.save();
 
         // Send reschedule email
-        const { sendBookingReschedule } = require('../utils/emailService');
-        const emailData = {
-            fullName: booking.fullName,
-            email: booking.email,
-            service: booking.service,
-            oldAppointmentDate: oldBookingDetails.appointmentDate,
-            oldSelectedTime: oldBookingDetails.selectedTime,
-            newAppointmentDate: booking.appointmentDate,
-            newSelectedTime: booking.selectedTime,
-            totalAmount: booking.totalAmount
-        };
-
         try {
-            await sendBookingReschedule(emailData);
-            console.log('Reschedule email sent successfully to:', booking.email);
+            const { sendBookingReschedule } = require('../utils/emailService');
+            const emailData = {
+                fullName: booking.fullName,
+                email: booking.email,
+                service: booking.service,
+                oldAppointmentDate: oldBookingDetails.appointmentDate,
+                oldSelectedTime: oldBookingDetails.selectedTime,
+                newAppointmentDate: booking.appointmentDate,
+                newSelectedTime: booking.selectedTime,
+                totalAmount: booking.totalAmount
+            };
+
+            const emailResult = await sendBookingReschedule(emailData);
+            if (emailResult.success) {
+                console.log('Reschedule email sent successfully to:', booking.email);
+            } else {
+                console.error('Failed to send reschedule email:', emailResult.error);
+            }
         } catch (emailError) {
             console.error('Failed to send reschedule email:', emailError);
+            // Don't fail the reschedule if email fails
         }
 
         res.json({
