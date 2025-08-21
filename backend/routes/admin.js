@@ -445,56 +445,7 @@ router.put('/bookings/:id/reschedule', protect, admin, [
     }
 });
 
-// @route   DELETE /api/admin/bookings/:id
-// @desc    Delete a booking
-// @access  Private (Admin only)
-router.delete('/bookings/:id', protect, admin, async (req, res) => {
-    try {
-        const booking = await Booking.findById(req.params.id);
-        
-        if (!booking) {
-            return res.status(404).json({
-                success: false,
-                message: 'Booking not found'
-            });
-        }
 
-        // Send cancellation email before deleting
-        try {
-            const { sendBookingCancellation } = require('../utils/emailService');
-            const emailData = {
-                fullName: booking.fullName,
-                email: booking.email,
-                service: booking.service,
-                appointmentDate: booking.appointmentDate,
-                selectedTime: booking.selectedTime
-            };
-
-            const emailResult = await sendBookingCancellation(emailData);
-            if (emailResult.success) {
-                console.log('Cancellation email sent successfully to:', booking.email);
-            } else {
-                console.error('Failed to send cancellation email:', emailResult.error);
-            }
-        } catch (emailError) {
-            console.error('Failed to send cancellation email:', emailError);
-            // Don't fail the deletion if email fails
-        }
-
-        await Booking.findByIdAndDelete(req.params.id);
-
-        res.json({
-            success: true,
-            message: 'Booking deleted successfully'
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({
-            success: false,
-            message: 'Server error'
-        });
-    }
-});
 
 // @route   GET /api/admin/reports
 // @desc    Get booking reports
